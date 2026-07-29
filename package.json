@@ -4,15 +4,17 @@
   "version": "0.0.1",
   "description": "Form backend SaaS — define schema, get endpoint, see submissions.",
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate"
+    "dev": "pnpm --parallel --filter @formsy/backend --filter @formsy/frontend dev",
+    "dev:backend": "pnpm --filter @formsy/backend dev",
+    "dev:frontend": "pnpm --filter @formsy/frontend dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @formsy/backend db:generate",
+    "db:migrate": "pnpm --filter @formsy/backend db:migrate",
+    "db:studio": "pnpm --filter @formsy/backend db:studio"
   },
   "devDependencies": {
-    "turbo": "^2.0.0",
     "typescript": "^5.4.5"
   },
   "engines": {

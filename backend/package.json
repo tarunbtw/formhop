@@ -1,5 +1,5 @@
 {
-  "name": "@formsy/api",
+  "name": "@formsy/backend",
   "version": "0.0.1",
   "private": true,
   "type": "module",
