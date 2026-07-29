@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { db, projects, submissions } from '../../../../packages/db/src/index.ts'
+import { db, projects, submissions } from '../db'
 import { eq, and, count, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
-import { CreateProjectSchema, UpdateProjectSchema, getPlanLimits } from '../../../../packages/schemas/src/index.ts'
+import { CreateProjectSchema, UpdateProjectSchema, getPlanLimits } from '../schemas'
 import { authMiddleware } from '../middleware/auth'
 import { getMonthlySubmissionCount } from '../lib/redis'
 

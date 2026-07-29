@@ -1,5 +1,5 @@
 import PgBoss from 'pg-boss'
-import { db, submissions, projects, users } from '../../../../packages/db/src/index.ts'
+import { db, submissions, projects, users } from '../db'
 import { eq } from 'drizzle-orm'
 import { sendEmail, buildSubmissionEmail } from '../lib/email'
 

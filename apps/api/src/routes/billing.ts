@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { Polar } from '@polar-sh/sdk'
 import { createHmac, timingSafeEqual } from 'crypto'
-import { db, users } from '../../../../packages/db/src/index.ts'
+import { db, users } from '../db'
 import { eq } from 'drizzle-orm'
 import { authMiddleware } from '../middleware/auth'
 

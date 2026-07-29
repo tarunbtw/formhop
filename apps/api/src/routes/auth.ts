@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
-import { db, users, refreshTokens } from '../../../../packages/db/src/index.ts'
+import { db, users, refreshTokens } from '../db'
 import { eq, and, gt } from 'drizzle-orm'
 import {
   SignJWT,

@@ -1,16 +1,15 @@
 import { Hono } from 'hono'
-import { db, projects, submissions, users } from '../../../../packages/db/src/index.ts'
+import { db, projects, submissions, users, type FieldDefinition } from '../db'
 import { eq } from 'drizzle-orm'
 import { createHash } from 'crypto'
 import { z } from 'zod'
-import { getPlanLimits } from '../../../../packages/schemas/src/index.ts'
+import { getPlanLimits } from '../schemas'
 import {
   checkIpRateLimit,
   getMonthlySubmissionCount,
   incrementMonthlySubmissionCount,
 } from '../lib/redis'
 import { getBoss } from '../jobs/index'
-import type { FieldDefinition } from '../../../../packages/db/src/index.ts'
 
 export const submitRouter = new Hono()
 

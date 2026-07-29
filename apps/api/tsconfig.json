@@ -9,11 +9,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
-    "sourceMap": true,
-    "paths": {
-      "@formsy/db": ["../../packages/db/src/index.ts"],
-      "@formsy/schemas": ["../../packages/schemas/src/index.ts"]
-    }
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

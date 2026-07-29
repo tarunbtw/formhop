@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { db, submissions, projects } from '../../../../packages/db/src/index.ts'
+import { db, submissions, projects } from '../db'
 import { eq, and, desc, count, sql } from 'drizzle-orm'
 import { authMiddleware } from '../middleware/auth'
 
