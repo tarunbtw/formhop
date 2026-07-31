@@ -1,9 +1,6 @@
-import React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Zap, Shield, Mail, Code2, Check, LayoutDashboard } from 'lucide-react'
+import { Zap, Shield, Mail, Code2, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 const FEATURES = [
   {
@@ -19,7 +16,7 @@ const FEATURES = [
   {
     icon: Mail,
     title: 'Email alerts',
-    desc: 'Get notified instantly on every new submission via Resend or Brevo.',
+    desc: 'Get notified instantly on every new submission via Resend.',
   },
   {
     icon: Code2,
@@ -28,12 +25,10 @@ const FEATURES = [
   },
 ]
 
-import { PLANS_CONFIG as PLANS } from '../lib/constants'
-
 export default function LandingPage() {
   const [searchParams] = useSearchParams()
   const authError = searchParams.get('auth_error')
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, loginWithGithub, loginWithGoogle } = useAuth()
 
   return (
     <div style={{ background: 'var(--canvas)' }}>
@@ -70,10 +65,7 @@ export default function LandingPage() {
               fontSize: 14,
               marginBottom: 24,
             }}>
-              {authError === 'access_denied' && 'GitHub authorization was denied.'}
-              {authError === 'no_email' && 'Your GitHub account has no public email.'}
-              {authError === 'server_error' && 'Authentication failed. Please try again.'}
-              {authError === 'session_expired' && 'Your session expired. Please sign in again.'}
+              {authError === 'session_expired' ? 'Your session expired. Please sign in again.' : 'Authentication failed. Please try again.'}
             </div>
           )}
 
@@ -87,34 +79,43 @@ export default function LandingPage() {
 
           <p
             className="text-subtitle"
-            style={{ color: 'var(--slate)', marginBottom: 40, maxWidth: 540, margin: '0 auto 40px' }}
+            style={{ color: 'var(--slate)', maxWidth: 540, margin: '0 auto 40px' }}
           >
             Define a schema, get a POST endpoint, embed it anywhere. Submissions
             land in your dashboard and your inbox.
           </p>
 
-          <div className="flex items-center justify-end gap-md" style={{ justifyContent: 'center' }}>
+          <div className="flex items-center gap-md" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
             {!isLoading && isAuthenticated ? (
               <Link to="/dashboard" className="btn btn-primary btn-lg">
                 <LayoutDashboard size={16} />
                 Go to Dashboard
               </Link>
             ) : (
-              <a href={`${API_BASE}/auth/github`} className="btn btn-primary btn-lg">
-                Start with GitHub
-                <ArrowRight size={16} />
-              </a>
+              <>
+                <button onClick={() => loginWithGithub()} className="btn btn-primary btn-lg">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                  </svg>
+                  Sign in with GitHub
+                </button>
+                <button onClick={() => loginWithGoogle()} className="btn btn-secondary btn-lg">
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  Sign in with Google
+                </button>
+              </>
             )}
-            <a href="#pricing" className="btn btn-secondary btn-lg">
-              See pricing
-            </a>
           </div>
         </div>
 
         {/* ─── Code preview ──────────────────────────────────────────────── */}
         <div
           style={{
-            marginTop: 64,
             maxWidth: 680,
             margin: '64px auto 0',
             textAlign: 'left',
@@ -149,14 +150,14 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Features ────────────────────────────────────────────────────── */}
-      <section style={{ padding: 'var(--space-section-lg) var(--space-xxl)' }}>
+      <section style={{ padding: 'var(--space-section) var(--space-xxl)', borderTop: '1px solid var(--hairline-soft)' }}>
         <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
-            <h2 className="text-heading-2" style={{ color: 'var(--ink)', marginBottom: 16 }}>
-              Everything you need
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <h2 className="text-heading-2" style={{ color: 'var(--ink)', marginBottom: 12 }}>
+              Everything you need for forms
             </h2>
-            <p className="text-body-md" style={{ color: 'var(--slate)', maxWidth: 480, margin: '0 auto' }}>
-              A backend for your forms, without the backend.
+            <p className="text-body-md" style={{ color: 'var(--slate)' }}>
+              Stop reinventing the wheel. Formsy handles submission intake so you can focus on building.
             </p>
           </div>
 
@@ -167,104 +168,33 @@ export default function LandingPage() {
               gap: 'var(--space-xl)',
             }}
           >
-            {FEATURES.map((f) => (
-              <div key={f.title} className="card">
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    background: 'var(--brand-green-soft)',
-                    borderRadius: 'var(--radius-md)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 'var(--space-md)',
-                    color: 'var(--brand-green-deep)',
-                  }}
-                >
-                  <f.icon size={20} />
-                </div>
-                <h3 className="text-heading-5" style={{ marginBottom: 8, color: 'var(--ink)' }}>
-                  {f.title}
-                </h3>
-                <p className="text-body-sm" style={{ color: 'var(--steel)' }}>
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Pricing ─────────────────────────────────────────────────────── */}
-      <section
-        id="pricing"
-        style={{
-          padding: 'var(--space-section-lg) var(--space-xxl)',
-          background: 'var(--surface)',
-        }}
-      >
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
-            <h2 className="text-heading-2" style={{ color: 'var(--ink)', marginBottom: 16 }}>
-              Pricing on your terms
-            </h2>
-            <p className="text-body-md" style={{ color: 'var(--slate)' }}>
-              Start free, upgrade when you need more.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: 'var(--space-xl)',
-              alignItems: 'start',
-            }}
-          >
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={plan.highlighted ? 'card-featured' : 'card'}
-                style={{ padding: 'var(--space-xxl)', position: 'relative' }}
-              >
-                {plan.highlighted && (
+            {FEATURES.map((f) => {
+              const Icon = f.icon
+              return (
+                <div key={f.title} className="card" style={{ padding: 'var(--space-xl)' }}>
                   <div
-                    className="badge badge-green"
-                    style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', fontSize: 11 }}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 'var(--radius-md)',
+                      background: 'var(--brand-green-soft)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 16,
+                    }}
                   >
-                    Popular
+                    <Icon size={20} color="var(--brand-green-deep)" />
                   </div>
-                )}
-                <h3 className="text-heading-4" style={{ color: 'var(--ink)', marginBottom: 8 }}>
-                  {plan.name}
-                </h3>
-                <div style={{ marginBottom: 24 }}>
-                  <span className="text-display-lg" style={{ fontSize: 40, letterSpacing: -1, color: 'var(--ink)' }}>
-                    ${plan.price}
-                  </span>
-                  <span className="text-body-sm" style={{ color: 'var(--steel)' }}>/mo</span>
+                  <h3 className="text-heading-4" style={{ color: 'var(--ink)', marginBottom: 8 }}>
+                    {f.title}
+                  </h3>
+                  <p className="text-body-sm" style={{ color: 'var(--steel)' }}>
+                    {f.desc}
+                  </p>
                 </div>
-                <ul style={{ listStyle: 'none', marginBottom: 32 }}>
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-center gap-xs"
-                      style={{ padding: '6px 0', fontSize: 14, color: 'var(--charcoal)' }}
-                    >
-                      <Check size={14} color="var(--brand-green)" style={{ flexShrink: 0 }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href={isAuthenticated ? '/dashboard' : `${API_BASE}/auth/github`}
-                  className={`btn w-full ${plan.highlighted ? 'btn-accent' : 'btn-secondary'}`}
-                >
-                  {isAuthenticated ? 'Go to Dashboard' : plan.cta}
-                </a>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
@@ -278,12 +208,7 @@ export default function LandingPage() {
         }}
       >
         <p className="text-body-sm" style={{ color: 'var(--steel)' }}>
-          © 2024 Formsy · Built with ♥ ·{' '}
-          {isAuthenticated ? (
-            <Link to="/dashboard" style={{ color: 'var(--brand-green)' }}>Dashboard</Link>
-          ) : (
-            <a href={`${API_BASE}/auth/github`} style={{ color: 'var(--brand-green)' }}>Sign in with GitHub</a>
-          )}
+          © Formsy · Clean, instant form backends.
         </p>
       </footer>
     </div>

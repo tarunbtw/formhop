@@ -1,13 +1,10 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../lib/api'
 import {
   FolderPlus,
-  ExternalLink,
   Copy,
   FileText,
-  Clock,
   ChevronRight,
 } from 'lucide-react'
 import { toast } from '../components/Toast'

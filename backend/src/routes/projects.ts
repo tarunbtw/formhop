@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator'
 import { db, projects, submissions } from '../db'
 import { eq, and, count, sql } from 'drizzle-orm'
 import { randomBytes } from 'crypto'
-import { CreateProjectSchema, UpdateProjectSchema, getPlanLimits } from '../schemas'
+import { CreateProjectSchema, UpdateProjectSchema } from '../schemas'
 import { authMiddleware } from '../middleware/auth'
 import { getMonthlySubmissionCount } from '../lib/redis'
 
@@ -12,9 +12,7 @@ export const projectsRouter = new Hono()
 // All routes require auth
 projectsRouter.use('*', authMiddleware)
 
-// Build endpoint URL from the incoming request so it always reflects the
-// actual host — localhost:3001 in dev, api.formsy.dev in prod, etc.
-// Override with API_BASE_URL env var when running behind a reverse proxy.
+// Build endpoint URL from the incoming request
 function endpointUrl(slug: string, c: { req: { url: string; header(name: string): string | undefined } }) {
   const override = process.env.API_BASE_URL
   if (override) return `${override.replace(/\/$/, '')}/submit/${slug}`
@@ -23,11 +21,10 @@ function endpointUrl(slug: string, c: { req: { url: string; header(name: string)
 }
 
 // ─── GET /api/projects/usage ────────────────────────────────────────────────
-// Returns the user's current usage vs plan limits for the settings page
+// Returns the user's current usage stats
 
 projectsRouter.get('/usage', async (c) => {
-  const { userId, plan } = c.get('user')
-  const limits = getPlanLimits(plan)
+  const { userId } = c.get('user')
 
   // Count active forms
   const [{ value: formCount }] = await db
@@ -39,8 +36,8 @@ projectsRouter.get('/usage', async (c) => {
   const monthlySubmissions = await getMonthlySubmissionCount(userId)
 
   return c.json({
-    forms: { used: Number(formCount), limit: limits.projects },
-    submissions: { used: monthlySubmissions, limit: limits.submissions_per_month },
+    forms: { used: Number(formCount) },
+    submissions: { used: monthlySubmissions },
   })
 })
 
@@ -81,25 +78,8 @@ projectsRouter.post(
   '/',
   zValidator('json', CreateProjectSchema),
   async (c) => {
-    const { userId, plan } = c.get('user')
+    const { userId } = c.get('user')
     const body = c.req.valid('json')
-
-    // Check plan project limit
-    const limits = getPlanLimits(plan)
-    const [{ value: projectCount }] = await db
-      .select({ value: count() })
-      .from(projects)
-      .where(eq(projects.userId, userId))
-
-    if (projectCount >= limits.projects) {
-      return c.json(
-        {
-          error: 'plan_limit_exceeded',
-          message: `Your ${plan} plan allows up to ${limits.projects} projects. Upgrade to create more.`,
-        },
-        403
-      )
-    }
 
     // Generate unique slug
     let slug = randomBytes(8).toString('base64url').slice(0, 10)

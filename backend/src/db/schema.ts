@@ -9,23 +9,55 @@ import {
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
-// ─── Users ─────────────────────────────────────────────────────────────────
+// ─── Better Auth Tables ───────────────────────────────────────────────────────
 
-export const users = pgTable('users', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  githubId: text('github_id').notNull().unique(),
+export const users = pgTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  name: text('name'),
-  avatarUrl: text('avatar_url'),
-  plan: text('plan').notNull().default('free'), // free | starter | pro | max
-  lsCustomerId: text('ls_customer_id'),
-  lsSubscriptionId: text('ls_subscription_id'),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  image: text('image'),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
 })
 
-// ─── Projects ───────────────────────────────────────────────────────────────
+export const sessions = pgTable('session', {
+  id: text('id').primaryKey(),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+  token: text('token').notNull().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+})
+
+export const accounts = pgTable('account', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull(),
+  providerId: text('provider_id').notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true, mode: 'date' }),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true, mode: 'date' }),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
+})
+
+export const verifications = pgTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).default(sql`now()`),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).default(sql`now()`),
+})
+
+// ─── Formsy Tables ────────────────────────────────────────────────────────────
 
 export const projects = pgTable(
   'projects',
@@ -33,7 +65,7 @@ export const projects = pgTable(
     id: uuid('id')
       .primaryKey()
       .default(sql`gen_random_uuid()`),
-    userId: uuid('user_id')
+    userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
@@ -46,10 +78,10 @@ export const projects = pgTable(
     emailNotifications: boolean('email_notifications').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
   },
-  (t) => [index('projects_user_id_idx').on(t.userId)]
+  (t) => ({
+    userIdIdx: index('projects_user_id_idx').on(t.userId),
+  })
 )
-
-// ─── Submissions ─────────────────────────────────────────────────────────────
 
 export const submissions = pgTable(
   'submissions',
@@ -65,25 +97,9 @@ export const submissions = pgTable(
     isRead: boolean('is_read').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
   },
-  (t) => [index('submissions_project_id_idx').on(t.projectId)]
-)
-
-// ─── Refresh Tokens ──────────────────────────────────────────────────────────
-
-export const refreshTokens = pgTable(
-  'refresh_tokens',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    tokenHash: text('token_hash').notNull().unique(),
-    expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
-  },
-  (t) => [index('refresh_tokens_user_id_idx').on(t.userId)]
+  (t) => ({
+    projectIdIdx: index('submissions_project_id_idx').on(t.projectId),
+  })
 )
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -98,10 +114,8 @@ export interface FieldDefinition {
 }
 
 export type User = typeof users.$inferSelect
-export type NewUser = typeof users.$inferInsert
+export type Session = typeof sessions.$inferSelect
+export type Account = typeof accounts.$inferSelect
+export type Verification = typeof verifications.$inferSelect
 export type Project = typeof projects.$inferSelect
-export type NewProject = typeof projects.$inferInsert
 export type Submission = typeof submissions.$inferSelect
-export type NewSubmission = typeof submissions.$inferInsert
-export type RefreshToken = typeof refreshTokens.$inferSelect
-export type NewRefreshToken = typeof refreshTokens.$inferInsert

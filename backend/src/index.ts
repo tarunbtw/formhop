@@ -4,10 +4,9 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { secureHeaders } from 'hono/secure-headers'
 import { trimTrailingSlash } from 'hono/trailing-slash'
-import { authRouter } from './routes/auth'
+import { auth } from './lib/auth'
 import { projectsRouter } from './routes/projects'
 import { submitRouter } from './routes/submit'
-import { billingRouter } from './routes/billing'
 import { submissionsRouter } from './routes/submissions'
 
 const app = new Hono()
@@ -23,14 +22,18 @@ const corsMiddleware = cors({
   origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
   credentials: true,
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposeHeaders: ['Set-Cookie'],
 })
 
 app.use('/api/*', corsMiddleware)
-app.use('/auth/*', corsMiddleware)
 
 // Public submit endpoint needs its own CORS (origin validated per-project in handler)
 app.use('/submit/*', cors({ origin: '*', allowMethods: ['POST', 'OPTIONS'] }))
+
+// ─── Better Auth Route ──────────────────────────────────────────────────────
+
+app.on(['POST', 'GET'], '/api/auth/**', (c) => auth.handler(c.req.raw))
 
 // ─── Health Check ───────────────────────────────────────────────────────────
 
@@ -38,10 +41,8 @@ app.get('/health', (c) => c.json({ ok: true, timestamp: new Date().toISOString()
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
 
-app.route('/auth', authRouter)
 app.route('/api/projects', projectsRouter)
 app.route('/submit', submitRouter)
-app.route('/api/billing', billingRouter)
 app.route('/api/projects/:id/submissions', submissionsRouter)
 
 // ─── 404 ────────────────────────────────────────────────────────────────────

@@ -3,10 +3,8 @@ import { db, projects, submissions, users, type FieldDefinition } from '../db'
 import { eq } from 'drizzle-orm'
 import { createHash } from 'crypto'
 import { z } from 'zod'
-import { getPlanLimits } from '../schemas'
 import {
   checkIpRateLimit,
-  getMonthlySubmissionCount,
   incrementMonthlySubmissionCount,
 } from '../lib/redis'
 import { sendEmail, buildSubmissionEmail } from '../lib/email'
@@ -42,7 +40,6 @@ submitRouter.post('/:slug', async (c) => {
       schema: projects.schema,
       allowedOrigins: projects.allowedOrigins,
       emailNotifications: projects.emailNotifications,
-      userPlan: users.plan,
       userId: users.id,
       userEmail: users.email,
     })
@@ -62,34 +59,26 @@ submitRouter.post('/:slug', async (c) => {
     }
   }
 
-  // 3. Rate limit — per IP
+  // 3. Rate limit — per IP (spam protection)
   const ip = c.req.header('x-forwarded-for')?.split(',')[0].trim() ?? '0.0.0.0'
   const ipAllowed = await checkIpRateLimit(ip)
   if (!ipAllowed) {
     return c.json({ error: 'rate_limit_exceeded' }, 429)
   }
 
-  // 4. Check monthly quota against plan limits
-  const limits = getPlanLimits(record.userPlan)
-  const monthlyCount = await getMonthlySubmissionCount(record.userId)
-
-  if (monthlyCount >= limits.submissions_per_month) {
-    return c.json({ error: 'quota_exceeded' }, 429)
-  }
-
-  // 5. Content-Type check
+  // 4. Content-Type check
   const contentType = c.req.header('Content-Type') ?? ''
   if (!contentType.includes('application/json')) {
     return c.json({ error: 'content_type_must_be_json' }, 415)
   }
 
-  // 6. Payload size check (50KB)
+  // 5. Payload size check (50KB)
   const contentLength = Number(c.req.header('Content-Length') ?? 0)
   if (contentLength > 50 * 1024) {
     return c.json({ error: 'payload_too_large' }, 413)
   }
 
-  // 7. Parse body
+  // 6. Parse body
   let body: Record<string, unknown>
   try {
     body = await c.req.json()
@@ -97,12 +86,12 @@ submitRouter.post('/:slug', async (c) => {
     return c.json({ error: 'invalid_json' }, 400)
   }
 
-  // 8. Honeypot check — silently discard bot submissions
+  // 7. Honeypot check — silently discard bot submissions
   if (body._honeypot && String(body._honeypot).trim() !== '') {
     return c.json({ ok: true, id: 'honeypot' })
   }
 
-  // 9. Validate against project schema
+  // 8. Validate against project schema
   const zodSchema = buildZodSchema(record.schema as FieldDefinition[])
   const parsed = zodSchema.safeParse(body)
 
@@ -116,7 +105,7 @@ submitRouter.post('/:slug', async (c) => {
     )
   }
 
-  // 10. Store submission (IP as SHA-256 hash)
+  // 9. Store submission (IP as SHA-256 hash)
   const ipHash = createHash('sha256').update(ip).digest('hex')
 
   const [submission] = await db
@@ -128,10 +117,10 @@ submitRouter.post('/:slug', async (c) => {
     })
     .returning()
 
-  // 11. Increment monthly quota in Redis (keyed by userId)
+  // 10. Increment monthly counter in Redis (for dashboard stats)
   await incrementMonthlySubmissionCount(record.userId)
 
-  // 12. Non-blocking email alert (best-effort)
+  // 11. Non-blocking email alert (best-effort)
   if (record.emailNotifications && record.userEmail) {
     const { subject, html } = buildSubmissionEmail({
       projectName: record.name,
@@ -144,6 +133,6 @@ submitRouter.post('/:slug', async (c) => {
     })
   }
 
-  // 13. Always respond fast
+  // 12. Always respond fast
   return c.json({ ok: true, id: submission.id })
 })

@@ -12,20 +12,20 @@ export const db = drizzle(queryClient, { schema })
 
 export {
   users,
+  sessions,
+  accounts,
+  verifications,
   projects,
   submissions,
-  refreshTokens,
 } from './schema'
 
 export type {
   FieldType,
   FieldDefinition,
   User,
-  NewUser,
+  Session,
+  Account,
+  Verification,
   Project,
-  NewProject,
   Submission,
-  NewSubmission,
-  RefreshToken,
-  NewRefreshToken,
 } from './schema'

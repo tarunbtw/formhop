@@ -12,6 +12,7 @@ submissionsRouter.use('*', authMiddleware)
 submissionsRouter.get('/', async (c) => {
   const { userId } = c.get('user')
   const projectId = c.req.param('id')
+  if (!projectId) return c.json({ error: 'not_found' }, 404)
 
   // Verify project ownership
   const [project] = await db
@@ -53,6 +54,7 @@ submissionsRouter.patch('/:sid/read', async (c) => {
   const { userId } = c.get('user')
   const projectId = c.req.param('id')
   const sid = c.req.param('sid')
+  if (!projectId || !sid) return c.json({ error: 'not_found' }, 404)
 
   // Verify project ownership
   const [project] = await db

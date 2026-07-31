@@ -1,18 +1,14 @@
-import React from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   FolderPlus,
   Settings,
   LogOut,
-  ChevronRight,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
-
 export function TopNav() {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout, loginWithGithub } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const isLandingPage = location.pathname === '/'
@@ -34,7 +30,7 @@ export function TopNav() {
 
       {isAuthenticated ? (
         isLandingPage ? (
-          // On landing page: just show Dashboard button
+          // On landing page: show Dashboard button
           <Link to="/dashboard" className="btn btn-primary btn-sm">
             Dashboard
           </Link>
@@ -46,9 +42,9 @@ export function TopNav() {
               New form
             </Link>
             <Link to="/dashboard/settings">
-              {user?.avatarUrl ? (
+              {user?.image ? (
                 <img
-                  src={user.avatarUrl}
+                  src={user.image}
                   alt={user.name ?? 'Avatar'}
                   style={{
                     width: 32,
@@ -76,18 +72,23 @@ export function TopNav() {
                 </div>
               )}
             </Link>
-            <button onClick={handleLogout} className="btn-ghost" style={{ padding: '6px', borderRadius: '6px', color: 'var(--steel)' }}>
+            <button
+              onClick={handleLogout}
+              className="btn-ghost"
+              style={{ padding: '6px', borderRadius: '6px', color: 'var(--steel)' }}
+              title="Sign out"
+            >
               <LogOut size={16} />
             </button>
           </div>
         )
       ) : (
-        <a
-          href={`${API_BASE}/auth/github`}
+        <button
+          onClick={() => loginWithGithub()}
           className="btn btn-primary btn-sm"
         >
-          Sign in with GitHub
-        </a>
+          Sign in
+        </button>
       )}
     </nav>
   )
@@ -125,7 +126,7 @@ export function DashboardSidebar() {
           className={`sidebar-item ${isActive('/dashboard/settings') ? 'active' : ''}`}
         >
           <Settings size={16} />
-          Settings & Billing
+          Settings
         </Link>
       </nav>
     </aside>

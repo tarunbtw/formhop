@@ -1,25 +1,34 @@
 import type { MiddlewareHandler } from 'hono'
-import { verifyAccessToken, type JwtUserPayload } from '../routes/auth'
+import { auth } from '../lib/auth'
 
-// Augment Hono context with user variable
+export interface AuthUser {
+  userId: string
+  email: string
+  name: string
+  image?: string | null
+}
+
 declare module 'hono' {
   interface ContextVariableMap {
-    user: JwtUserPayload
+    user: AuthUser
   }
 }
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
-  const authHeader = c.req.header('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers,
+  })
+
+  if (!session?.user) {
     return c.json({ error: 'unauthorized' }, 401)
   }
 
-  const token = authHeader.slice(7)
-  try {
-    const payload = await verifyAccessToken(token)
-    c.set('user', payload)
-    await next()
-  } catch {
-    return c.json({ error: 'invalid_or_expired_token' }, 401)
-  }
+  c.set('user', {
+    userId: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    image: session.user.image,
+  })
+
+  await next()
 }

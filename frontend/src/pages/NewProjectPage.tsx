@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { projectsApi } from '../lib/api'
@@ -7,7 +7,6 @@ import {
   Trash2,
   GripVertical,
   ArrowLeft,
-  ChevronDown,
 } from 'lucide-react'
 import { toast } from '../components/Toast'
 
@@ -61,7 +60,7 @@ export default function NewProjectPage() {
     return Object.keys(errs).length === 0
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!validate()) return
 

@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -6,21 +6,22 @@ import React, {
   useCallback,
   type ReactNode,
 } from 'react'
-import { authApi, setAccessToken, clearAccessToken, getAccessToken } from '../lib/api'
+import { authClient } from '../lib/auth-client'
 
-interface User {
+export interface User {
   id: string
   email: string
-  name: string | null
-  avatarUrl: string | null
-  plan: string
-  createdAt: string
+  name: string
+  image?: string | null
+  createdAt?: string | Date
 }
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
+  loginWithGithub: () => Promise<void>
+  loginWithGoogle: () => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -31,55 +32,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchUser = useCallback(async () => {
+  const fetchSession = useCallback(async () => {
     try {
-      const userData = await authApi.me()
-      setUser(userData)
+      const { data } = await authClient.getSession({ query: {} })
+      if (data?.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          image: data.user.image,
+          createdAt: data.user.createdAt,
+        })
+      } else {
+        setUser(null)
+      }
     } catch {
       setUser(null)
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    async function init() {
-      setIsLoading(true)
-      try {
-        // Check URL for token from OAuth callback
-        const urlParams = new URLSearchParams(window.location.search)
-        const token = urlParams.get('token')
+    fetchSession()
+  }, [fetchSession])
 
-        if (token) {
-          setAccessToken(token)
-          // Clean URL
-          const url = new URL(window.location.href)
-          url.searchParams.delete('token')
-          window.history.replaceState({}, '', url.toString())
-        } else if (!getAccessToken()) {
-          // Try to refresh from httpOnly cookie
-          try {
-            const res = await authApi.refresh()
-            setAccessToken(res.accessToken)
-          } catch {
-            // Not logged in — that's fine
-            setIsLoading(false)
-            return
-          }
-        }
+  const loginWithGithub = useCallback(async () => {
+    await authClient.signIn.social({
+      provider: 'github',
+      callbackURL: `${window.location.origin}/dashboard`,
+    })
+  }, [])
 
-        await fetchUser()
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    init()
-  }, [fetchUser])
+  const loginWithGoogle = useCallback(async () => {
+    await authClient.signIn.social({
+      provider: 'google',
+      callbackURL: `${window.location.origin}/dashboard`,
+    })
+  }, [])
 
   const logout = useCallback(async () => {
     try {
-      await authApi.logout()
+      await authClient.signOut({})
     } finally {
-      clearAccessToken()
       setUser(null)
     }
   }, [])
@@ -90,8 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated: !!user,
+        loginWithGithub,
+        loginWithGoogle,
         logout,
-        refreshUser: fetchUser,
+        refreshUser: fetchSession,
       }}
     >
       {children}
