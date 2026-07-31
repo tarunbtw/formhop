@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { db, projects, submissions } from '../db'
 import { eq, and, count, sql } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
+import { randomBytes } from 'crypto'
 import { CreateProjectSchema, UpdateProjectSchema, getPlanLimits } from '../schemas'
 import { authMiddleware } from '../middleware/auth'
 import { getMonthlySubmissionCount } from '../lib/redis'
@@ -102,7 +102,7 @@ projectsRouter.post(
     }
 
     // Generate unique slug
-    let slug = nanoid(10)
+    let slug = randomBytes(8).toString('base64url').slice(0, 10)
     let attempts = 0
     while (attempts < 3) {
       const [existing] = await db
@@ -110,7 +110,7 @@ projectsRouter.post(
         .from(projects)
         .where(eq(projects.slug, slug))
       if (!existing) break
-      slug = nanoid(10)
+      slug = randomBytes(8).toString('base64url').slice(0, 10)
       attempts++
     }
 

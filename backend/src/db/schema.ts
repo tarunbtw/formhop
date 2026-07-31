@@ -6,29 +6,24 @@ import {
   timestamp,
   jsonb,
   index,
-  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // ─── Users ─────────────────────────────────────────────────────────────────
 
-export const users = pgTable(
-  'users',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    githubId: text('github_id').notNull().unique(),
-    email: text('email').notNull().unique(),
-    name: text('name'),
-    avatarUrl: text('avatar_url'),
-    plan: text('plan').notNull().default('free'), // free | starter | pro | max
-    lsCustomerId: text('ls_customer_id'),
-    lsSubscriptionId: text('ls_subscription_id'),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
-  },
-  (t) => [index('users_github_id_idx').on(t.githubId)]
-)
+export const users = pgTable('users', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  githubId: text('github_id').notNull().unique(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  avatarUrl: text('avatar_url'),
+  plan: text('plan').notNull().default('free'), // free | starter | pro | max
+  lsCustomerId: text('ls_customer_id'),
+  lsSubscriptionId: text('ls_subscription_id'),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
+})
 
 // ─── Projects ───────────────────────────────────────────────────────────────
 
@@ -51,10 +46,7 @@ export const projects = pgTable(
     emailNotifications: boolean('email_notifications').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
   },
-  (t) => [
-    uniqueIndex('projects_slug_idx').on(t.slug),
-    index('projects_user_id_idx').on(t.userId),
-  ]
+  (t) => [index('projects_user_id_idx').on(t.userId)]
 )
 
 // ─── Submissions ─────────────────────────────────────────────────────────────
@@ -91,10 +83,7 @@ export const refreshTokens = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
   },
-  (t) => [
-    uniqueIndex('refresh_tokens_hash_idx').on(t.tokenHash),
-    index('refresh_tokens_user_id_idx').on(t.userId),
-  ]
+  (t) => [index('refresh_tokens_user_id_idx').on(t.userId)]
 )
 
 // ─── Types ───────────────────────────────────────────────────────────────────

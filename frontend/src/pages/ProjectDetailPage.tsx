@@ -16,14 +16,14 @@ import {
 import { toast } from '../components/Toast'
 import { ConfirmModal } from '../components/ConfirmModal'
 
+import { type FieldType, FIELD_TYPES } from '../lib/constants'
+
 interface Field {
   name: string
   label: string
-  type: 'text' | 'email' | 'number' | 'boolean' | 'textarea'
+  type: FieldType
   required: boolean
 }
-
-const FIELD_TYPES = ['text', 'email', 'number', 'boolean', 'textarea'] as const
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -399,7 +399,7 @@ ${schema.map((f) => `  ${f.name}: '...'`).join(',\n')},
                         style={{ fontSize: 13 }}
                       >
                         {FIELD_TYPES.map((t) => (
-                          <option key={t} value={t}>{t}</option>
+                          <option key={t.value} value={t.value}>{t.label}</option>
                         ))}
                       </select>
                       <label className="flex items-center gap-xs" style={{ fontSize: 13, color: 'var(--slate)', cursor: 'pointer', whiteSpace: 'nowrap' }}>

@@ -12,16 +12,7 @@ import {
 } from 'lucide-react'
 import { toast } from '../components/Toast'
 
-const PLAN_LIMITS: Record<string, { projects: number; submissions: number }> = {
-  free: { projects: 2, submissions: 100 },
-  starter: { projects: 5, submissions: 10000 },
-  pro: { projects: 15, submissions: 35000 },
-  max: { projects: Infinity, submissions: 100000 },
-}
-
-const PLAN_PRICES: Record<string, number> = {
-  free: 0, starter: 7, pro: 10, max: 30,
-}
+import { PLAN_LIMITS, PLAN_PRICES } from '../lib/constants'
 
 const UPGRADE_PLANS = ['starter', 'pro', 'max'] as const
 

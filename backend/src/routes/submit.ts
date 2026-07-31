@@ -9,7 +9,7 @@ import {
   getMonthlySubmissionCount,
   incrementMonthlySubmissionCount,
 } from '../lib/redis'
-import { getBoss } from '../jobs/index'
+import { sendEmail, buildSubmissionEmail } from '../lib/email'
 
 export const submitRouter = new Hono()
 
@@ -34,20 +34,30 @@ function buildZodSchema(fields: FieldDefinition[]): z.ZodObject<z.ZodRawShape> {
 submitRouter.post('/:slug', async (c) => {
   const slug = c.req.param('slug')
 
-  // 1. Look up project by slug
-  const [project] = await db
-    .select()
+  // 1. Look up project and owner in a single query
+  const [record] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      schema: projects.schema,
+      allowedOrigins: projects.allowedOrigins,
+      emailNotifications: projects.emailNotifications,
+      userPlan: users.plan,
+      userId: users.id,
+      userEmail: users.email,
+    })
     .from(projects)
+    .innerJoin(users, eq(projects.userId, users.id))
     .where(eq(projects.slug, slug))
 
-  if (!project) {
+  if (!record) {
     return c.json({ error: 'not_found' }, 404)
   }
 
   // 2. CORS check — if allowedOrigins is non-empty, validate Origin header
-  if (project.allowedOrigins && project.allowedOrigins.length > 0) {
+  if (record.allowedOrigins && record.allowedOrigins.length > 0) {
     const origin = c.req.header('Origin') ?? ''
-    if (!project.allowedOrigins.includes(origin)) {
+    if (!record.allowedOrigins.includes(origin)) {
       return c.json({ error: 'origin_not_allowed' }, 403)
     }
   }
@@ -59,17 +69,9 @@ submitRouter.post('/:slug', async (c) => {
     return c.json({ error: 'rate_limit_exceeded' }, 429)
   }
 
-  // 4. Check monthly quota against plan limits — join to get owner's plan + userId
-  const [projectWithOwner] = await db
-    .select({ plan: users.plan, userId: users.id })
-    .from(projects)
-    .innerJoin(users, eq(projects.userId, users.id))
-    .where(eq(projects.id, project.id))
-
-  const plan = projectWithOwner?.plan ?? 'free'
-  const userId = projectWithOwner?.userId ?? project.id
-  const limits = getPlanLimits(plan)
-  const monthlyCount = await getMonthlySubmissionCount(userId)
+  // 4. Check monthly quota against plan limits
+  const limits = getPlanLimits(record.userPlan)
+  const monthlyCount = await getMonthlySubmissionCount(record.userId)
 
   if (monthlyCount >= limits.submissions_per_month) {
     return c.json({ error: 'quota_exceeded' }, 429)
@@ -101,7 +103,7 @@ submitRouter.post('/:slug', async (c) => {
   }
 
   // 9. Validate against project schema
-  const zodSchema = buildZodSchema(project.schema as FieldDefinition[])
+  const zodSchema = buildZodSchema(record.schema as FieldDefinition[])
   const parsed = zodSchema.safeParse(body)
 
   if (!parsed.success) {
@@ -120,27 +122,26 @@ submitRouter.post('/:slug', async (c) => {
   const [submission] = await db
     .insert(submissions)
     .values({
-      projectId: project.id,
+      projectId: record.id,
       data: parsed.data,
       ipHash,
     })
     .returning()
 
   // 11. Increment monthly quota in Redis (keyed by userId)
-  await incrementMonthlySubmissionCount(userId)
+  await incrementMonthlySubmissionCount(record.userId)
 
-  // 12. Enqueue email job (non-blocking)
-  try {
-    const boss = getBoss()
-    if (boss) {
-      await boss.send('send-submission-email', {
-        submissionId: submission.id,
-        projectId: project.id,
-      })
-    }
-  } catch (err) {
-    console.error('[SUBMIT] Failed to enqueue email job:', err)
-    // Don't fail the request — email is best-effort
+  // 12. Non-blocking email alert (best-effort)
+  if (record.emailNotifications && record.userEmail) {
+    const { subject, html } = buildSubmissionEmail({
+      projectName: record.name,
+      projectId: record.id,
+      data: parsed.data as Record<string, unknown>,
+      submittedAt: submission.createdAt,
+    })
+    sendEmail({ to: record.userEmail, subject, html }).catch((err) => {
+      console.error('[SUBMIT] Email alert failed:', err)
+    })
   }
 
   // 13. Always respond fast

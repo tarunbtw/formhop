@@ -28,36 +28,7 @@ const FEATURES = [
   },
 ]
 
-const PLANS = [
-  {
-    name: 'Free',
-    price: 0,
-    features: ['2 forms', '100 submissions/mo', 'Email notifications', 'CDN snippet'],
-    cta: 'Get started free',
-    highlighted: false,
-  },
-  {
-    name: 'Starter',
-    price: 7,
-    features: ['5 forms', '10,000 submissions/mo', 'Email notifications', 'CDN snippet', 'Priority support'],
-    cta: 'Start for $7/mo',
-    highlighted: true,
-  },
-  {
-    name: 'Pro',
-    price: 10,
-    features: ['15 forms', '35,000 submissions/mo', 'Email notifications', 'CDN snippet', 'Priority support'],
-    cta: 'Start for $10/mo',
-    highlighted: false,
-  },
-  {
-    name: 'Max',
-    price: 30,
-    features: ['Unlimited forms', '100,000 submissions/mo', 'Email notifications', 'CDN snippet', 'Dedicated support'],
-    cta: 'Start for $30/mo',
-    highlighted: false,
-  },
-]
+import { PLANS_CONFIG as PLANS } from '../lib/constants'
 
 export default function LandingPage() {
   const [searchParams] = useSearchParams()

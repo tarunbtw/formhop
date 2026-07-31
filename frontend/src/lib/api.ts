@@ -1,9 +1,3 @@
-import axios from 'axios'
-
-// Use relative URL so Vite proxy forwards to localhost:3001
-// This makes cookies and auth same-origin in dev
-const API_BASE = ''
-
 // In-memory token store (never localStorage)
 let accessToken: string | null = null
 
@@ -19,85 +13,128 @@ export function clearAccessToken() {
   accessToken = null
 }
 
-export const api = axios.create({
-  baseURL: API_BASE,
-  withCredentials: true, // needed for httpOnly refresh cookie
-})
-
-// ─── Request interceptor: attach Bearer token ─────────────────────────────────
-
-api.interceptors.request.use((config) => {
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`
-  }
-  return config
-})
-
-// ─── Response interceptor: 401 → refresh → retry once ────────────────────────
-
-let isRefreshing = false
-let failedQueue: Array<{
-  resolve: (token: string) => void
-  reject: (err: unknown) => void
-}> = []
-
-function processQueue(error: unknown, token: string | null) {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) reject(error)
-    else resolve(token!)
-  })
-  failedQueue = []
+interface RequestOptions {
+  method?: string
+  headers?: Record<string, string>
+  body?: unknown
+  params?: Record<string, unknown>
 }
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config
+let isRefreshing = false
+let refreshPromise: Promise<string> | null = null
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject })
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`
-          return api(originalRequest)
-        })
-      }
-
-      originalRequest._retry = true
-      isRefreshing = true
-
-      try {
-        const res = await axios.post(
-          `${API_BASE}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        )
-        const newToken = res.data.accessToken
-        setAccessToken(newToken)
-        processQueue(null, newToken)
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
-        return api(originalRequest)
-      } catch (refreshErr) {
-        processQueue(refreshErr, null)
-        clearAccessToken()
-        window.location.href = '/?auth_error=session_expired'
-        return Promise.reject(refreshErr)
-      } finally {
-        isRefreshing = false
+async function request<T = unknown>(url: string, options: RequestOptions = {}): Promise<{ data: T }> {
+  let fullUrl = url
+  if (options.params) {
+    const searchParams = new URLSearchParams()
+    for (const [key, val] of Object.entries(options.params)) {
+      if (val !== undefined && val !== null) {
+        searchParams.set(key, String(val))
       }
     }
-
-    return Promise.reject(error)
+    const query = searchParams.toString()
+    if (query) fullUrl += (url.includes('?') ? '&' : '?') + query
   }
-)
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  }
+
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`
+  }
+
+  const response = await fetch(fullUrl, {
+    method: options.method || 'GET',
+    headers,
+    credentials: 'include', // needed for httpOnly refresh cookie
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  })
+
+  // Handle 401 — attempt token refresh once
+  if (response.status === 401 && !url.includes('/auth/refresh')) {
+    if (!isRefreshing) {
+      isRefreshing = true
+      refreshPromise = fetch('/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error('Refresh failed')
+          const data = await res.json()
+          setAccessToken(data.accessToken)
+          return data.accessToken
+        })
+        .catch((err) => {
+          clearAccessToken()
+          window.location.href = '/?auth_error=session_expired'
+          throw err
+        })
+        .finally(() => {
+          isRefreshing = false
+          refreshPromise = null
+        })
+    }
+
+    try {
+      const newToken = await refreshPromise
+      headers.Authorization = `Bearer ${newToken}`
+      const retryResponse = await fetch(fullUrl, {
+        method: options.method || 'GET',
+        headers,
+        credentials: 'include',
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      })
+
+      if (!retryResponse.ok) {
+        const errorData = await retryResponse.json().catch(() => ({}))
+        const err = new Error(errorData.message || errorData.error || 'Request failed')
+        ;(err as unknown as { response: { data: unknown; status: number } }).response = {
+          data: errorData,
+          status: retryResponse.status,
+        }
+        throw err
+      }
+      const data = await retryResponse.json().catch(() => ({}))
+      return { data }
+    } catch (err) {
+      throw err
+    }
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    const err = new Error(errorData.message || errorData.error || 'Request failed')
+    ;(err as unknown as { response: { data: unknown; status: number } }).response = {
+      data: errorData,
+      status: response.status,
+    }
+    throw err
+  }
+
+  const data = await response.json().catch(() => ({}))
+  return { data }
+}
+
+export const api = {
+  get: <T = unknown>(url: string, config?: { params?: Record<string, unknown> }) =>
+    request<T>(url, { method: 'GET', params: config?.params }),
+  post: <T = unknown>(url: string, data?: unknown) =>
+    request<T>(url, { method: 'POST', body: data }),
+  patch: <T = unknown>(url: string, data?: unknown) =>
+    request<T>(url, { method: 'PATCH', body: data }),
+  delete: <T = unknown>(url: string) =>
+    request<T>(url, { method: 'DELETE' }),
+}
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
 
 export const authApi = {
   me: () => api.get('/auth/me').then((r) => r.data),
   logout: () => api.post('/auth/logout').then((r) => r.data),
-  refresh: () => api.post('/auth/refresh').then((r) => r.data),
+  refresh: () => api.post<{ accessToken: string }>('/auth/refresh').then((r) => r.data),
 }
 
 export const projectsApi = {
@@ -123,6 +160,6 @@ export const submissionsApi = {
 
 export const billingApi = {
   checkout: (plan: string) =>
-    api.get(`/api/billing/checkout`, { params: { plan } }).then((r) => r.data),
-  portal: () => api.get('/api/billing/portal').then((r) => r.data),
+    api.get<{ checkoutUrl: string }>(`/api/billing/checkout`, { params: { plan } }).then((r) => r.data),
+  portal: () => api.get<{ portalUrl: string }>('/api/billing/portal').then((r) => r.data),
 }

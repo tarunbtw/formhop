@@ -1,71 +1,33 @@
-import { Resend } from 'resend'
-
-let _resend: Resend | null = null
-
-function getResend(): Resend {
-  if (_resend) return _resend
-  const key = process.env.RESEND_API_KEY
-  if (!key) throw new Error('RESEND_API_KEY is required')
-  _resend = new Resend(key)
-  return _resend
-}
-
-// ─── Brevo fallback ───────────────────────────────────────────────────────────
-
-async function sendViaBrevo(params: {
-  to: string
-  subject: string
-  html: string
-}): Promise<void> {
-  const key = process.env.BREVO_API_KEY
-  if (!key) throw new Error('BREVO_API_KEY is required')
-
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'api-key': key,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      sender: { name: 'Formsy', email: 'onboarding@resend.com' },
-      to: [{ email: params.to }],
-      subject: params.subject,
-      htmlContent: params.html,
-    }),
-  })
-
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Brevo error ${res.status}: ${err}`)
-  }
-}
-
-// ─── Main send function (Resend → Brevo fallback) ─────────────────────────────
+// ─── Direct Resend API via native fetch ──────────────────────────────────────
 
 export async function sendEmail(params: {
   to: string
   subject: string
   html: string
 }): Promise<void> {
-  try {
-    const resend = getResend()
-    await resend.emails.send({
+  const key = process.env.RESEND_API_KEY
+  if (!key) throw new Error('RESEND_API_KEY is required')
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
       from: 'Formsy <onboarding@resend.com>',
-      to: params.to,
+      to: [params.to],
       subject: params.subject,
       html: params.html,
-    })
-    console.log(`[EMAIL] Sent via Resend to ${params.to}`)
-  } catch (primaryErr) {
-    console.warn('[EMAIL] Resend failed, trying Brevo:', primaryErr)
-    try {
-      await sendViaBrevo(params)
-      console.log(`[EMAIL] Sent via Brevo to ${params.to}`)
-    } catch (fallbackErr) {
-      console.error('[EMAIL] Both providers failed:', fallbackErr)
-      throw fallbackErr
-    }
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`Resend error ${res.status}: ${err}`)
   }
+
+  console.log(`[EMAIL] Sent to ${params.to}`)
 }
 
 // ─── Email template ───────────────────────────────────────────────────────────

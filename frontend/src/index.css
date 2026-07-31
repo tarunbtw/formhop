@@ -14,7 +14,6 @@
   --brand-green-deep: #00A882;
   --brand-green-soft: rgba(0, 212, 164, 0.08);
   --brand-error: #E53E3E;
-  --brand-tag: #3772CF;
 
   /* Primary */
   --primary: #000000;
@@ -43,11 +42,6 @@
   /* Hero Gradients */
   --hero-sky-from: #E8F4FD;
   --hero-sky-to: #F5F0E8;
-  --hero-dark-from: #0D2B2B;
-  --hero-dark-to: #00A882;
-
-  /* Testimonial */
-  --testimonial-orange: #FF6B35;
 
   /* Spacing */
   --space-xxs: 4px;
@@ -57,10 +51,7 @@
   --space-lg: 20px;
   --space-xl: 24px;
   --space-xxl: 32px;
-  --space-xxxl: 40px;
-  --space-section-sm: 48px;
   --space-section: 64px;
-  --space-section-lg: 96px;
   --space-hero: 120px;
 
   /* Radius */
@@ -68,13 +59,9 @@
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-xxl: 24px;
   --radius-full: 9999px;
 
   /* Elevation */
-  --shadow-1: rgba(0,0,0,0.04) 0px 1px 2px;
-  --shadow-2: rgba(0,0,0,0.08) 0px 4px 12px;
   --shadow-3: rgba(0,0,0,0.12) 0px 24px 48px -8px;
   --shadow-brand: rgba(0,212,164,0.12) 0px 8px 24px;
 }

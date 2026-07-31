@@ -8,7 +8,7 @@ Formsy is a form-as-a-service backend. Define your schema, get an instant POST e
 
 ```
 formsy/
-├── backend/          # Hono backend on Node.js (Drizzle ORM, PostgreSQL, Upstash Redis, pg-boss, Polar.sh)
+├── backend/          # Hono backend on Node.js (Drizzle ORM, PostgreSQL, Upstash Redis, Polar.sh)
 ├── frontend/         # React 18 + Vite dashboard (TanStack Query, React Router, Mintlify-inspired design system)
 ├── sdk/              # Vanilla JS CDN client bundle (Formsy.submit())
 ├── cli/              # Interactive scaffolding CLI (npx @formsy/init)
@@ -16,7 +16,7 @@ formsy/
 └── package.json
 ```
 
-- **`backend/`**: REST API, dynamic Zod validation, pg-boss email worker queue, Redis rate-limiting and monthly quotas, GitHub OAuth + JWT, and Polar.sh billing.
+- **`backend/`**: REST API, dynamic Zod validation, async email alerts, Redis rate-limiting and monthly quotas, GitHub OAuth + JWT, and Polar.sh billing.
 - **`frontend/`**: Developer dashboard to create forms, manage schemas, view & export submissions, and manage subscriptions.
 - **`sdk/`**: <5KB standalone browser client script.
 - **`cli/`**: Project generator supporting React, Next.js, Vue, and plain HTML.
@@ -51,7 +51,7 @@ Key variables needed:
 - `REDIS_URL` & `REDIS_TOKEN`: Upstash Redis credentials
 - `GITHUB_CLIENT_ID` & `GITHUB_CLIENT_SECRET`: GitHub OAuth application
 - `JWT_SECRET`: 64-character hex secret (`openssl rand -hex 32`)
-- `RESEND_API_KEY` (and optional `BREVO_API_KEY`): Email delivery
+- `RESEND_API_KEY`: Email delivery via Resend
 - `POLAR_ACCESS_TOKEN` & `POLAR_WEBHOOK_SECRET`: Billing (Polar.sh)
 
 ### Database Migration

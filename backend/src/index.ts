@@ -9,7 +9,6 @@ import { projectsRouter } from './routes/projects'
 import { submitRouter } from './routes/submit'
 import { billingRouter } from './routes/billing'
 import { submissionsRouter } from './routes/submissions'
-import { initJobs } from './jobs/index'
 
 const app = new Hono()
 
@@ -66,11 +65,6 @@ app.onError((err, c) => {
 // ─── Start ──────────────────────────────────────────────────────────────────
 
 const port = Number(process.env.PORT ?? 3001)
-
-// Init pg-boss job queue
-initJobs().catch((err) => {
-  console.error('[JOBS] Failed to initialize job queue:', err)
-})
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`🚀 Formsy API running on http://localhost:${port}`)

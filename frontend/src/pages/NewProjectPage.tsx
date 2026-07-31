@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { toast } from '../components/Toast'
 
-type FieldType = 'text' | 'email' | 'number' | 'boolean' | 'textarea'
+import { FIELD_TYPES, type FieldType } from '../lib/constants'
 
 interface Field {
   id: string
@@ -24,14 +24,6 @@ interface Field {
 function newField(): Field {
   return { id: Math.random().toString(36).slice(2), name: '', type: 'text', required: false, label: '' }
 }
-
-const FIELD_TYPES: { value: FieldType; label: string }[] = [
-  { value: 'text', label: 'Short text' },
-  { value: 'email', label: 'Email' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Checkbox' },
-  { value: 'textarea', label: 'Long text' },
-]
 
 export default function NewProjectPage() {
   const navigate = useNavigate()
