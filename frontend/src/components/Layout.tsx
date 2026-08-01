@@ -20,6 +20,57 @@ export function TopNav() {
     navigate('/')
   }
 
+  // Floating pill navbar for Landing Page (inspired by Fillout)
+  if (isLandingPage) {
+    return (
+      <header className="floating-nav-wrapper">
+        <nav className="floating-nav">
+          {/* Brand Logo */}
+          <Link to="/" className="nav-logo" style={{ textDecoration: 'none' }}>
+            <div className="nav-logo-mark">
+              <Layers size={17} strokeWidth={2.5} />
+            </div>
+            <div className="flex items-center gap-xs">
+              <span style={{ fontWeight: 800, fontSize: 17, color: '#0F172A', letterSpacing: '-0.02em' }}>Formsy</span>
+              <span className="badge-pill-subtle">v2.0</span>
+            </div>
+          </Link>
+
+          {/* Landing Page Navigation Links */}
+          <div className="nav-links">
+            <a href="#features" className="nav-link">Features</a>
+            <a href="#demo" className="nav-link">Interactive Demo</a>
+            <a href="#how-it-works" className="nav-link">How it works</a>
+            <a href="#faq" className="nav-link">FAQ</a>
+          </div>
+
+          {/* Right Actions */}
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="btn-pill-dark">
+              <span>Dashboard</span>
+              <ArrowRight size={13} />
+            </Link>
+          ) : (
+            <div className="flex items-center gap-xs">
+              <button
+                type="button"
+                onClick={() => loginWithGithub()}
+                className="btn-pill-ghost"
+              >
+                Log in
+              </button>
+              <a href="#cta" className="btn-pill-dark">
+                <span>Get started</span>
+                <ArrowRight size={13} />
+              </a>
+            </div>
+          )}
+        </nav>
+      </header>
+    )
+  }
+
+  // Standard sticky dashboard navbar
   return (
     <nav className="top-nav">
       {/* Brand Logo */}
@@ -30,94 +81,56 @@ export function TopNav() {
         <span>Formsy</span>
       </Link>
 
-      {/* Landing Page Navigation Links */}
-      {isLandingPage && (
-        <div className="nav-links" style={{ marginLeft: 32 }}>
-          <a href="#features" className="nav-link">Features</a>
-          <a href="#demo" className="nav-link">Interactive Demo</a>
-          <a href="#how-it-works" className="nav-link">How it works</a>
-          <a href="#faq" className="nav-link">FAQ</a>
-        </div>
-      )}
-
       <div className="flex-1" />
 
       {/* Right Actions */}
-      {isAuthenticated ? (
-        isLandingPage ? (
-          <Link to="/dashboard" className="btn btn-primary btn-sm flex items-center gap-xs">
-            <span>Dashboard</span>
-            <ArrowRight size={14} />
+      {isAuthenticated && (
+        <div className="flex items-center gap-md">
+          <Link to="/dashboard/projects/new" className="btn btn-secondary btn-sm flex items-center gap-xs">
+            <FolderPlus size={14} />
+            <span>New form</span>
           </Link>
-        ) : (
-          <div className="flex items-center gap-md">
-            <Link to="/dashboard/projects/new" className="btn btn-secondary btn-sm flex items-center gap-xs">
-              <FolderPlus size={14} />
-              <span>New form</span>
-            </Link>
-            <Link to="/dashboard/settings" title="Account settings">
-              {user?.image ? (
-                <img
-                  src={user.image}
-                  alt={user.name ?? 'Avatar'}
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    border: '2px solid var(--hairline)',
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    background: 'var(--brand-green)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: '#0A0D14',
-                  }}
-                >
-                  {(user?.name ?? user?.email ?? 'U')[0].toUpperCase()}
-                </div>
-              )}
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="btn-ghost"
-              style={{ padding: '6px', borderRadius: '8px', color: 'var(--steel)' }}
-              title="Sign out"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
-        )
-      ) : isLandingPage ? (
-        <div className="flex items-center gap-sm">
+          <Link to="/dashboard/settings" title="Account settings">
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={user.name ?? 'Avatar'}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  border: '2px solid var(--hairline)',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  background: 'var(--brand-green)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#0A0D14',
+                }}
+              >
+                {(user?.name ?? user?.email ?? 'U')[0].toUpperCase()}
+              </div>
+            )}
+          </Link>
           <button
-            onClick={() => loginWithGithub()}
-            className="btn btn-ghost btn-sm"
-            style={{ fontWeight: 600 }}
+            onClick={handleLogout}
+            className="btn-ghost"
+            style={{ padding: '6px', borderRadius: '8px', color: 'var(--steel)' }}
+            title="Sign out"
           >
-            Sign in
+            <LogOut size={16} />
           </button>
-          <a href="#cta" className="btn btn-primary btn-sm flex items-center gap-xs">
-            <span>Start free</span>
-            <ArrowRight size={13} />
-          </a>
         </div>
-      ) : (
-        <button
-          onClick={() => loginWithGithub()}
-          className="btn btn-primary btn-sm"
-        >
-          Sign in
-        </button>
       )}
     </nav>
   )
