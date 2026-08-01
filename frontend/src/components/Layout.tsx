@@ -4,6 +4,8 @@ import {
   FolderPlus,
   Settings,
   LogOut,
+  ArrowRight,
+  Layers,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -20,52 +22,65 @@ export function TopNav() {
 
   return (
     <nav className="top-nav">
-      {/* Logo always goes to landing page */}
+      {/* Brand Logo */}
       <Link to="/" className="nav-logo">
-        <span className="nav-logo-dot" />
-        Formsy
+        <div className="nav-logo-mark">
+          <Layers size={18} strokeWidth={2.5} />
+        </div>
+        <span>Formsy</span>
       </Link>
+
+      {/* Landing Page Navigation Links */}
+      {isLandingPage && (
+        <div className="nav-links" style={{ marginLeft: 32 }}>
+          <a href="#features" className="nav-link">Features</a>
+          <a href="#demo" className="nav-link">Interactive Demo</a>
+          <a href="#how-it-works" className="nav-link">How it works</a>
+          <a href="#faq" className="nav-link">FAQ</a>
+        </div>
+      )}
 
       <div className="flex-1" />
 
+      {/* Right Actions */}
       {isAuthenticated ? (
         isLandingPage ? (
-          // On landing page: show Dashboard button
-          <Link to="/dashboard" className="btn btn-primary btn-sm">
-            Dashboard
+          <Link to="/dashboard" className="btn btn-primary btn-sm flex items-center gap-xs">
+            <span>Dashboard</span>
+            <ArrowRight size={14} />
           </Link>
         ) : (
-          // In dashboard: show full nav actions
           <div className="flex items-center gap-md">
-            <Link to="/dashboard/projects/new" className="btn btn-secondary btn-sm">
+            <Link to="/dashboard/projects/new" className="btn btn-secondary btn-sm flex items-center gap-xs">
               <FolderPlus size={14} />
-              New form
+              <span>New form</span>
             </Link>
-            <Link to="/dashboard/settings">
+            <Link to="/dashboard/settings" title="Account settings">
               {user?.image ? (
                 <img
                   src={user.image}
                   alt={user.name ?? 'Avatar'}
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 34,
+                    height: 34,
                     borderRadius: '50%',
                     border: '2px solid var(--hairline)',
+                    objectFit: 'cover',
                   }}
                 />
               ) : (
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 34,
+                    height: 34,
                     borderRadius: '50%',
                     background: 'var(--brand-green)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--primary)',
+                    fontWeight: 700,
+                    color: '#0A0D14',
                   }}
                 >
                   {(user?.name ?? user?.email ?? 'U')[0].toUpperCase()}
@@ -75,13 +90,27 @@ export function TopNav() {
             <button
               onClick={handleLogout}
               className="btn-ghost"
-              style={{ padding: '6px', borderRadius: '6px', color: 'var(--steel)' }}
+              style={{ padding: '6px', borderRadius: '8px', color: 'var(--steel)' }}
               title="Sign out"
             >
               <LogOut size={16} />
             </button>
           </div>
         )
+      ) : isLandingPage ? (
+        <div className="flex items-center gap-sm">
+          <button
+            onClick={() => loginWithGithub()}
+            className="btn btn-ghost btn-sm"
+            style={{ fontWeight: 600 }}
+          >
+            Sign in
+          </button>
+          <a href="#cta" className="btn btn-primary btn-sm flex items-center gap-xs">
+            <span>Start free</span>
+            <ArrowRight size={13} />
+          </a>
+        </div>
       ) : (
         <button
           onClick={() => loginWithGithub()}
@@ -97,36 +126,36 @@ export function TopNav() {
 export function DashboardSidebar() {
   const location = useLocation()
 
-  const isActive = (path: string) => location.pathname.startsWith(path)
+  const isActive = (path: string) => location.pathname === path
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-section-header">Navigation</div>
+      <div className="sidebar-section-header">Dashboard</div>
       <nav>
         <Link
           to="/dashboard"
-          className={`sidebar-item ${location.pathname === '/dashboard' ? 'active' : ''}`}
+          className={`sidebar-item ${isActive('/dashboard') ? 'active' : ''}`}
         >
           <LayoutDashboard size={16} />
-          All Forms
+          <span>All Forms</span>
         </Link>
         <Link
           to="/dashboard/projects/new"
           className={`sidebar-item ${isActive('/dashboard/projects/new') ? 'active' : ''}`}
         >
           <FolderPlus size={16} />
-          New Form
+          <span>New Form</span>
         </Link>
       </nav>
 
-      <div className="sidebar-section-header" style={{ marginTop: 24 }}>Account</div>
+      <div className="sidebar-section-header" style={{ marginTop: 24 }}>Preferences</div>
       <nav>
         <Link
           to="/dashboard/settings"
           className={`sidebar-item ${isActive('/dashboard/settings') ? 'active' : ''}`}
         >
           <Settings size={16} />
-          Settings
+          <span>Settings &amp; Usage</span>
         </Link>
       </nav>
     </aside>
