@@ -1,0 +1,4 @@
+export const APP_LIMITS = {
+  MAX_FORMS_PER_USER: 10,
+  MAX_MONTHLY_SUBMISSIONS_PER_USER: 100,
+} as const

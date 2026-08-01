@@ -12,6 +12,7 @@ import {
   Pencil,
   X,
   Plus,
+  Mail,
 } from 'lucide-react'
 import { toast } from '../components/Toast'
 import { ConfirmModal } from '../components/ConfirmModal'
@@ -34,6 +35,7 @@ export default function ProjectDetailPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editFields, setEditFields] = useState<Field[]>([])
+  const [editEmailNotifications, setEditEmailNotifications] = useState(false)
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -45,6 +47,7 @@ export default function ProjectDetailPage() {
     mutationFn: () => projectsApi.delete(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['usage'] })
       toast('Form deleted')
       navigate('/dashboard')
     },
@@ -52,11 +55,8 @@ export default function ProjectDetailPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: { name: string; schema: Field[] }) =>
-      projectsApi.update(id!, {
-        name: data.name,
-        schema: data.schema,
-      }),
+    mutationFn: (data: { name?: string; schema?: Field[]; email_notifications?: boolean }) =>
+      projectsApi.update(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] })
       queryClient.invalidateQueries({ queryKey: ['projects'] })
@@ -70,6 +70,7 @@ export default function ProjectDetailPage() {
     if (!project) return
     setEditName(project.name)
     setEditFields((project.schema as Field[]).map((f) => ({ ...f })))
+    setEditEmailNotifications(project.emailNotifications ?? false)
     setIsEditing(true)
   }
 
@@ -98,7 +99,11 @@ export default function ProjectDetailPage() {
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(f.name))
         return toast(`Field key "${f.name}" must be alphanumeric (letters, numbers, _)`, 'error')
     }
-    updateMutation.mutate({ name: editName, schema: editFields })
+    updateMutation.mutate({
+      name: editName,
+      schema: editFields,
+      email_notifications: editEmailNotifications,
+    })
   }
 
   function copyEndpoint() {
@@ -153,9 +158,21 @@ ${schema.map((f) => `  ${f.name}: '...'`).join(',\n')},
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-heading-3" style={{ color: 'var(--ink)' }}>{project.name}</h1>
-            <p className="text-caption" style={{ color: 'var(--steel)', marginTop: 4 }}>
-              {schema.length} fields · {project.submission_count} submissions
-            </p>
+            <div className="flex items-center gap-sm" style={{ marginTop: 6 }}>
+              <p className="text-caption" style={{ color: 'var(--steel)' }}>
+                {schema.length} fields · {project.submission_count} submissions
+              </p>
+              <span className="text-caption" style={{ color: 'var(--hairline-dark)' }}>·</span>
+              {project.emailNotifications ? (
+                <span className="badge badge-success flex items-center gap-xs" style={{ fontSize: 11 }}>
+                  <Mail size={11} /> Alerts ON
+                </span>
+              ) : (
+                <span className="badge badge-surface flex items-center gap-xs" style={{ fontSize: 11, opacity: 0.65 }}>
+                  <Mail size={11} /> Alerts OFF
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-sm">
             <button
@@ -237,6 +254,51 @@ ${schema.map((f) => `  ${f.name}: '...'`).join(',\n')},
             <pre>{exampleSnippet}</pre>
           </div>
         </div>
+      </div>
+
+      {/* Email Notifications */}
+      <div
+        className="card"
+        style={{
+          marginBottom: 'var(--space-xxl)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: 'var(--space-lg) var(--space-xl)',
+        }}
+      >
+        <div>
+          <div className="flex items-center gap-sm" style={{ marginBottom: 4 }}>
+            <h3 className="text-body-md-med" style={{ color: 'var(--ink)' }}>Email notifications</h3>
+            <span className={`badge ${project.emailNotifications ? 'badge-success' : 'badge-surface'}`}>
+              {project.emailNotifications ? 'Active' : 'Disabled'}
+            </span>
+          </div>
+          <p className="text-body-sm" style={{ color: 'var(--steel)' }}>
+            {project.emailNotifications
+              ? 'Sending an instant email alert via Resend on every submission.'
+              : 'Disabled by default. Turn this on to receive an email alert via Resend whenever someone submits.'}
+          </p>
+        </div>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={project.emailNotifications}
+            disabled={updateMutation.isPending}
+            onChange={(e) => {
+              const nextVal = e.target.checked
+              updateMutation.mutate(
+                { email_notifications: nextVal },
+                {
+                  onSuccess: () => {
+                    toast(nextVal ? 'Email notifications enabled!' : 'Email notifications disabled')
+                  },
+                }
+              )
+            }}
+          />
+          <span className="toggle-track" />
+        </label>
       </div>
 
       {/* Schema */}
@@ -422,6 +484,33 @@ ${schema.map((f) => `  ${f.name}: '...'`).join(',\n')},
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Email notifications in edit modal */}
+            <div
+              className="flex items-center justify-between"
+              style={{
+                padding: '12px 14px',
+                background: 'var(--surface)',
+                border: '1px solid var(--hairline)',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: 24,
+              }}
+            >
+              <div>
+                <p className="text-body-sm-med" style={{ color: 'var(--ink)' }}>Email notifications</p>
+                <p className="text-caption" style={{ color: 'var(--steel)' }}>
+                  Receive an instant email alert via Resend on new submissions
+                </p>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={editEmailNotifications}
+                  onChange={(e) => setEditEmailNotifications(e.target.checked)}
+                />
+                <span className="toggle-track" />
+              </label>
             </div>
 
             <div className="flex items-center gap-sm" style={{ justifyContent: 'flex-end' }}>

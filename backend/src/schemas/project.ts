@@ -28,7 +28,7 @@ export const CreateProjectSchema = z.object({
     .min(1, 'At least one field is required')
     .max(20, 'Maximum 20 fields allowed'),
   allowed_origins: z.array(z.string().url()).max(10).default([]),
-  email_notifications: z.boolean().default(true),
+  email_notifications: z.boolean().default(false),
 })
 
 // ─── Update Project ───────────────────────────────────────────────────────

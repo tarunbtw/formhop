@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto'
 import { CreateProjectSchema, UpdateProjectSchema } from '../schemas'
 import { authMiddleware } from '../middleware/auth'
 import { getMonthlySubmissionCount } from '../lib/redis'
+import { APP_LIMITS } from '../config/limits'
 
 export const projectsRouter = new Hono()
 
@@ -21,7 +22,7 @@ function endpointUrl(slug: string, c: { req: { url: string; header(name: string)
 }
 
 // ─── GET /api/projects/usage ────────────────────────────────────────────────
-// Returns the user's current usage stats
+// Returns the user's current usage stats and hard limits
 
 projectsRouter.get('/usage', async (c) => {
   const { userId } = c.get('user')
@@ -32,12 +33,22 @@ projectsRouter.get('/usage', async (c) => {
     .from(projects)
     .where(eq(projects.userId, userId))
 
-  // Monthly submission count from Redis (keyed by userId)
+  const formsUsed = Number(formCount)
+
+  // Monthly submission count from Redis / PostgreSQL
   const monthlySubmissions = await getMonthlySubmissionCount(userId)
 
   return c.json({
-    forms: { used: Number(formCount) },
-    submissions: { used: monthlySubmissions },
+    forms: {
+      used: formsUsed,
+      limit: APP_LIMITS.MAX_FORMS_PER_USER,
+      remaining: Math.max(0, APP_LIMITS.MAX_FORMS_PER_USER - formsUsed),
+    },
+    submissions: {
+      used: monthlySubmissions,
+      limit: APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER,
+      remaining: Math.max(0, APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER - monthlySubmissions),
+    },
   })
 })
 
@@ -81,6 +92,24 @@ projectsRouter.post(
     const { userId } = c.get('user')
     const body = c.req.valid('json')
 
+    // Enforce hard limit of 10 forms per user
+    const [{ value: formCount }] = await db
+      .select({ value: count() })
+      .from(projects)
+      .where(eq(projects.userId, userId))
+
+    if (Number(formCount) >= APP_LIMITS.MAX_FORMS_PER_USER) {
+      return c.json(
+        {
+          error: 'form_limit_reached',
+          message: `You have reached the limit of ${APP_LIMITS.MAX_FORMS_PER_USER} forms. Please delete an existing form before creating a new one.`,
+          limit: APP_LIMITS.MAX_FORMS_PER_USER,
+          used: Number(formCount),
+        },
+        403
+      )
+    }
+
     // Generate unique slug
     let slug = randomBytes(8).toString('base64url').slice(0, 10)
     let attempts = 0
@@ -102,7 +131,7 @@ projectsRouter.post(
         slug,
         schema: body.schema,
         allowedOrigins: body.allowed_origins,
-        emailNotifications: body.email_notifications,
+        emailNotifications: body.email_notifications ?? false,
       })
       .returning()
 
@@ -115,6 +144,7 @@ projectsRouter.post(
 projectsRouter.get('/:id', async (c) => {
   const { userId } = c.get('user')
   const id = c.req.param('id')
+  if (!id) return c.json({ error: 'not_found' }, 404)
 
   const [project] = await db
     .select()
@@ -143,6 +173,7 @@ projectsRouter.patch(
   async (c) => {
     const { userId } = c.get('user')
     const id = c.req.param('id')
+    if (!id) return c.json({ error: 'not_found' }, 404)
     const body = c.req.valid('json')
 
     // Verify ownership
@@ -175,6 +206,7 @@ projectsRouter.patch(
 projectsRouter.delete('/:id', async (c) => {
   const { userId } = c.get('user')
   const id = c.req.param('id')
+  if (!id) return c.json({ error: 'not_found' }, 404)
 
   const [existing] = await db
     .select({ id: projects.id })

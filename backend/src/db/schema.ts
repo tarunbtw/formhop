@@ -75,7 +75,7 @@ export const projects = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'`),
-    emailNotifications: boolean('email_notifications').notNull().default(true),
+    emailNotifications: boolean('email_notifications').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().default(sql`now()`),
   },
   (t) => ({
@@ -99,6 +99,7 @@ export const submissions = pgTable(
   },
   (t) => ({
     projectIdIdx: index('submissions_project_id_idx').on(t.projectId),
+    createdAtIdx: index('submissions_created_at_idx').on(t.createdAt),
   })
 )
 

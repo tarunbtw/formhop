@@ -1,16 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { projectsApi } from '../lib/api'
 import {
   Plus,
   Trash2,
   GripVertical,
   ArrowLeft,
+  AlertCircle,
 } from 'lucide-react'
 import { toast } from '../components/Toast'
-
-import { FIELD_TYPES, type FieldType } from '../lib/constants'
+import { FIELD_TYPES, APP_LIMITS, type FieldType } from '../lib/constants'
 
 interface Field {
   id: string
@@ -28,22 +28,34 @@ export default function NewProjectPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  const { data: usage } = useQuery({
+    queryKey: ['usage'],
+    queryFn: projectsApi.usage,
+  })
+
+  const formCount = usage?.forms?.used ?? 0
+  const isAtLimit = formCount >= APP_LIMITS.MAX_FORMS_PER_USER
+
   const [name, setName] = useState('')
   const [fields, setFields] = useState<Field[]>([newField()])
   const [allowedOrigins, setAllowedOrigins] = useState('')
-  const [emailNotifications, setEmailNotifications] = useState(true)
+  const [emailNotifications, setEmailNotifications] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const createMutation = useMutation({
     mutationFn: projectsApi.create,
     onSuccess: (project) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['usage'] })
       toast('Form created!', 'success')
       navigate(`/dashboard/projects/${project.id}`)
     },
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      toast(msg ?? 'Failed to create form', 'error')
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Failed to create form'
+      toast(msg, 'error')
     },
   })
 
@@ -62,6 +74,10 @@ export default function NewProjectPage() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (isAtLimit) {
+      toast(`Form limit reached (${APP_LIMITS.MAX_FORMS_PER_USER}/${APP_LIMITS.MAX_FORMS_PER_USER}). Please delete an existing form.`, 'error')
+      return
+    }
     if (!validate()) return
 
     const origins = allowedOrigins
@@ -102,9 +118,30 @@ export default function NewProjectPage() {
         </button>
         <h1 className="text-heading-3" style={{ color: 'var(--ink)' }}>Create new form</h1>
         <p className="text-body-sm" style={{ color: 'var(--steel)', marginTop: 4 }}>
-          Define your form schema to get a submission endpoint.
+          Define your form schema to get an instant submission endpoint. ({formCount} / {APP_LIMITS.MAX_FORMS_PER_USER} forms used)
         </p>
       </div>
+
+      {/* Limit banner if at limit */}
+      {isAtLimit && (
+        <div
+          className="flex items-center gap-sm"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--hairline)',
+            borderRadius: 'var(--radius-md)',
+            padding: '14px 18px',
+            marginBottom: 'var(--space-xxl)',
+            color: 'var(--slate)',
+            fontSize: 13,
+          }}
+        >
+          <AlertCircle size={18} color="var(--brand-warning)" style={{ flexShrink: 0 }} />
+          <span>
+            You have reached the limit of <strong>{APP_LIMITS.MAX_FORMS_PER_USER} forms</strong>. Please delete an existing form from your dashboard before creating a new one.
+          </span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Form name */}
@@ -229,7 +266,9 @@ export default function NewProjectPage() {
         >
           <div>
             <p className="text-body-sm-med" style={{ color: 'var(--ink)' }}>Email notifications</p>
-            <p className="text-caption" style={{ color: 'var(--steel)' }}>Get an email for every new submission</p>
+            <p className="text-caption" style={{ color: 'var(--steel)' }}>
+              Get an email alert via Resend for every new submission (disabled by default)
+            </p>
           </div>
           <label className="toggle">
             <input
@@ -246,13 +285,16 @@ export default function NewProjectPage() {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={createMutation.isPending}
+            disabled={createMutation.isPending || isAtLimit}
+            style={isAtLimit ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
             {createMutation.isPending ? (
               <>
                 <div className="spinner" style={{ width: 16, height: 16 }} />
                 Creating...
               </>
+            ) : isAtLimit ? (
+              `Limit reached (${APP_LIMITS.MAX_FORMS_PER_USER}/${APP_LIMITS.MAX_FORMS_PER_USER})`
             ) : (
               'Create form'
             )}
