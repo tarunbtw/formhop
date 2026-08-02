@@ -254,7 +254,7 @@ export default function DashboardPage() {
             <Layers className="mx-auto h-8 w-8 text-muted-foreground/60 stroke-[1.5]" />
             <h3 className="mt-3 text-sm font-semibold text-foreground">No forms created</h3>
             <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-              Create your first form endpoint in seconds. Formsy validates schemas, drops spam with honeypots, and dispatches email alerts.
+              Create your first form endpoint in seconds. Formhop validates schemas, drops spam with honeypots, and dispatches email alerts.
             </p>
             <div className="mt-4">
               <Link to="/dashboard/projects/new">

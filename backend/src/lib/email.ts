@@ -18,7 +18,7 @@ export async function sendEmail(params: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Formsy <onboarding@resend.com>',
+      from: 'Formhop <onboarding@resend.com>',
       to: [params.to],
       subject: params.subject,
       html: params.html,
@@ -53,7 +53,7 @@ export function buildSubmissionEmail(params: {
     )
     .join('')
 
-  const dashboardUrl = `${process.env.FRONTEND_URL ?? 'https://formsy.dev'}/dashboard/projects/${projectId}/submissions`
+  const dashboardUrl = `${process.env.FRONTEND_URL ?? 'https://formhop.dev'}/dashboard/projects/${projectId}/submissions`
 
   const html = `
 <!DOCTYPE html>
@@ -70,7 +70,7 @@ export function buildSubmissionEmail(params: {
           <!-- Header -->
           <tr>
             <td style="padding:24px 32px;border-bottom:1px solid #E5E5E5">
-              <span style="font-size:20px;font-weight:600;color:#0A0A0A;letter-spacing:-0.5px">Formsy</span>
+              <span style="font-size:20px;font-weight:600;color:#0A0A0A;letter-spacing:-0.5px">Formhop</span>
               <span style="display:inline-block;margin-left:8px;background:#00D4A4;color:#000;font-size:11px;font-weight:600;padding:2px 8px;border-radius:9999px">New submission</span>
             </td>
           </tr>

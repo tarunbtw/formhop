@@ -57,7 +57,7 @@ export const verifications = pgTable('verification', {
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).default(sql`now()`),
 })
 
-// ─── Formsy Tables ────────────────────────────────────────────────────────────
+// ─── Formhop Tables ────────────────────────────────────────────────────────────
 
 export const projects = pgTable(
   'projects',

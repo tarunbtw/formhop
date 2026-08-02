@@ -7,9 +7,9 @@ import { join } from 'path'
 function reactTemplate(slug: string): string {
   return `import { useState } from 'react'
 
-const ENDPOINT = \`https://api.formsy.dev/submit/${slug}\`
+const ENDPOINT = \`https://api.formhop.dev/submit/${slug}\`
 
-export default function FormsyContactForm() {
+export default function FormhopContactForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -55,9 +55,9 @@ function nextTemplate(slug: string): string {
   return `'use client'
 import { useState } from 'react'
 
-const ENDPOINT = \`https://api.formsy.dev/submit/${slug}\`
+const ENDPOINT = \`https://api.formhop.dev/submit/${slug}\`
 
-export default function FormsyContactForm() {
+export default function FormhopContactForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -108,7 +108,7 @@ function vueTemplate(slug: string): string {
 <script setup>
 import { ref, reactive } from 'vue'
 
-const ENDPOINT = 'https://api.formsy.dev/submit/${slug}'
+const ENDPOINT = 'https://api.formhop.dev/submit/${slug}'
 const form = reactive({ name: '', email: '', message: '' })
 const loading = ref(false)
 const success = ref(false)
@@ -141,7 +141,7 @@ function vanillaTemplate(slug: string): string {
 <head>
   <meta charset="utf-8">
   <title>Contact</title>
-  <script src="https://cdn.formsy.dev/v1/formsy.min.js"><\/script>
+  <script src="https://cdn.formhop.dev/v1/formhop.min.js"><\/script>
 </head>
 <body>
   <form id="contact-form">
@@ -159,7 +159,7 @@ function vanillaTemplate(slug: string): string {
       const data = Object.fromEntries(new FormData(e.target))
       const status = document.getElementById('status')
       try {
-        await Formsy.submit('${slug}', data)
+        await Formhop.submit('${slug}', data)
         status.textContent = 'Sent! ✓'
         e.target.reset()
       } catch (err) {
@@ -173,15 +173,15 @@ function vanillaTemplate(slug: string): string {
 }
 
 const TEMPLATES = {
-  react: { fn: reactTemplate, ext: 'tsx', filename: 'FormsyContactForm.tsx' },
-  nextjs: { fn: nextTemplate, ext: 'tsx', filename: 'FormsyContactForm.tsx' },
-  vue: { fn: vueTemplate, ext: 'vue', filename: 'FormsyContactForm.vue' },
-  vanilla: { fn: vanillaTemplate, ext: 'html', filename: 'formsy-contact.html' },
+  react: { fn: reactTemplate, ext: 'tsx', filename: 'FormhopContactForm.tsx' },
+  nextjs: { fn: nextTemplate, ext: 'tsx', filename: 'FormhopContactForm.tsx' },
+  vue: { fn: vueTemplate, ext: 'vue', filename: 'FormhopContactForm.vue' },
+  vanilla: { fn: vanillaTemplate, ext: 'html', filename: 'formhop-contact.html' },
 } as const
 
 async function main() {
   console.log('')
-  p.intro('  Formsy — scaffold a form component  ')
+  p.intro('  Formhop — scaffold a form component  ')
 
   const framework = await p.select({
     message: 'Pick your framework',
@@ -229,8 +229,8 @@ async function main() {
 
   p.outro(
     `✓ Created ${template.filename}\n` +
-    `  Edit the component, then read docs at https://formsy.dev/docs\n` +
-    `  Your endpoint: https://api.formsy.dev/submit/${slug}`
+    `  Edit the component, then read docs at https://formhop.dev/docs\n` +
+    `  Your endpoint: https://api.formhop.dev/submit/${slug}`
   )
 }
 

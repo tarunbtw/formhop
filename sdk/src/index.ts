@@ -1,6 +1,6 @@
 // ─── Default base URL ─────────────────────────────────────────────────────────
-// Can be overridden with Formsy.init({ baseUrl: '...' }) before calling submit.
-// Defaults to localhost:3001 (dev) — set to https://api.formsy.dev in production.
+// Can be overridden with Formhop.init({ baseUrl: '...' }) before calling submit.
+// Defaults to localhost:3001 (dev) — set to https://api.formhop.dev in production.
 
 let _baseUrl = 'http://localhost:3001'
 
@@ -9,24 +9,24 @@ let _baseUrl = 'http://localhost:3001'
  *
  * @example
  * // Production
- * Formsy.init({ baseUrl: 'https://api.formsy.dev' })
+ * Formhop.init({ baseUrl: 'https://api.formhop.dev' })
  *
  * @example
  * // Local dev (default)
- * Formsy.init({ baseUrl: 'http://localhost:3001' })
+ * Formhop.init({ baseUrl: 'http://localhost:3001' })
  */
 function init(config: { baseUrl: string }) {
   _baseUrl = config.baseUrl.replace(/\/$/, '') // strip trailing slash
 }
 
 /**
- * Submit form data to a Formsy endpoint.
+ * Submit form data to a Formhop endpoint.
  *
- * @param slug  - Your project slug (from the Formsy dashboard)
+ * @param slug  - Your project slug (from the Formhop dashboard)
  * @param data  - Key/value pairs matching your form schema
  *
  * @example
- * Formsy.submit('V0HJr2mw0D', { name: 'Jane', email: 'jane@example.com' })
+ * Formhop.submit('V0HJr2mw0D', { name: 'Jane', email: 'jane@example.com' })
  *   .then(res => console.log('Submitted!', res.id))
  *   .catch(err => console.error(err))
  */
@@ -49,9 +49,11 @@ async function submit(
   return json
 }
 
-export const Formsy = { init, submit }
+export const Formhop = { init, submit }
+export const Formsy = Formhop
 
 // UMD global for <script> tag usage
 if (typeof window !== 'undefined') {
-  ;(window as unknown as Record<string, unknown>).Formsy = Formsy
+  ;(window as unknown as Record<string, unknown>).Formhop = Formhop
+  ;(window as unknown as Record<string, unknown>).Formsy = Formhop
 }

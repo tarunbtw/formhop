@@ -1,18 +1,18 @@
 {
-  "name": "formsy",
+  "name": "formhop",
   "private": true,
   "version": "0.0.1",
   "description": "Form backend SaaS — define schema, get endpoint, see submissions.",
   "scripts": {
-    "dev": "pnpm --parallel --filter @formsy/backend --filter @formsy/frontend dev",
-    "dev:backend": "pnpm --filter @formsy/backend dev",
-    "dev:frontend": "pnpm --filter @formsy/frontend dev",
+    "dev": "pnpm --parallel --filter @formhop/backend --filter @formhop/frontend dev",
+    "dev:backend": "pnpm --filter @formhop/backend dev",
+    "dev:frontend": "pnpm --filter @formhop/frontend dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "db:generate": "pnpm --filter @formsy/backend db:generate",
-    "db:migrate": "pnpm --filter @formsy/backend db:migrate",
-    "db:studio": "pnpm --filter @formsy/backend db:studio"
+    "db:generate": "pnpm --filter @formhop/backend db:generate",
+    "db:migrate": "pnpm --filter @formhop/backend db:migrate",
+    "db:studio": "pnpm --filter @formhop/backend db:studio"
   },
   "devDependencies": {
     "typescript": "^5.4.5"

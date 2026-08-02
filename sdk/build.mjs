@@ -11,9 +11,9 @@ const result = await build({
   bundle: true,
   minify: true,
   format: 'iife',
-  globalName: 'FormsySDK',
+  globalName: 'FormhopSDK',
   target: ['es2017'],
-  outfile: join(__dirname, 'dist/formsy.min.js'),
+  outfile: join(__dirname, 'dist/formhop.min.js'),
   platform: 'browser',
   define: {
     'process.env.NODE_ENV': '"production"',
@@ -21,10 +21,10 @@ const result = await build({
 })
 
 // Report gzipped size
-const raw = readFileSync(join(__dirname, 'dist/formsy.min.js'))
+const raw = readFileSync(join(__dirname, 'dist/formhop.min.js'))
 const gzipped = gzipSync(raw)
 const kb = (gzipped.length / 1024).toFixed(2)
-console.log(`✓ Built dist/formsy.min.js — ${kb}KB gzipped`)
+console.log(`✓ Built dist/formhop.min.js — ${kb}KB gzipped`)
 
 if (gzipped.length > 5 * 1024) {
   console.warn(`⚠ Bundle exceeds 5KB gzipped target (${kb}KB)`)

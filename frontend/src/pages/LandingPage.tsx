@@ -107,7 +107,7 @@ const TEMPLATES: Record<TemplateKey, TemplateConfig> = {
       { key: 'full_name', label: 'Candidate Name', type: 'text', placeholder: 'Sarah Chen', required: true },
       { key: 'email', label: 'Contact Email', type: 'email', placeholder: 'sarah@chen.dev', required: true },
       { key: 'portfolio', label: 'GitHub / Portfolio URL', type: 'url', placeholder: 'https://github.com/sarahchen', required: true },
-      { key: 'cover_note', label: 'Why Formsy?', type: 'textarea', placeholder: 'Experience building full-stack applications...' },
+      { key: 'cover_note', label: 'Why Formhop?', type: 'textarea', placeholder: 'Experience building full-stack applications...' },
     ],
     sampleData: {
       full_name: 'Sarah Chen',
@@ -187,7 +187,7 @@ export default function LandingPage() {
   }
 
   const getCurlCode = () => {
-    return `curl -X POST https://api.formsy.dev/submit/${activeTemplate.slug} \\
+    return `curl -X POST https://api.formhop.dev/submit/${activeTemplate.slug} \\
   -H "Content-Type: application/json" \\
   -d '${JSON.stringify(formInputs, null, 2)}'`
   }
@@ -205,7 +205,7 @@ export function ${activeTemplate.name.replace(/\s+/g, '')}() {
     const formData = new FormData(e.currentTarget)
     const payload = Object.fromEntries(formData.entries())
 
-    const res = await fetch('https://api.formsy.dev/submit/${activeTemplate.slug}', {
+    const res = await fetch('https://api.formhop.dev/submit/${activeTemplate.slug}', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -249,7 +249,7 @@ ${activeTemplate.fields
             <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs transition-transform group-hover:scale-105">
               F
             </div>
-            <span className="tracking-tight text-foreground font-bold">Formsy</span>
+            <span className="tracking-tight text-foreground font-bold">Formhop</span>
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border">
               v2.0
             </span>
@@ -430,7 +430,7 @@ ${activeTemplate.fields
               Live interactive endpoint preview
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Try submitting below. Formsy validates fields, blocks honeypot spam, records the payload, and notifies via Resend.
+              Try submitting below. Formhop validates fields, blocks honeypot spam, records the payload, and notifies via Resend.
             </p>
           </div>
 
@@ -446,7 +446,7 @@ ${activeTemplate.fields
 
               <div className="browser-address">
                 <Lock size={11} className="text-emerald-500" />
-                <span>https://api.formsy.dev/submit/{activeTemplate.slug}</span>
+                <span>https://api.formhop.dev/submit/{activeTemplate.slug}</span>
               </div>
 
               <div className="flex items-center gap-1">
@@ -756,7 +756,7 @@ ${activeTemplate.fields
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                  Define strict types for your form keys. Formsy automatically validates email syntax, number ranges, required inputs, and sanitizes unwanted fields before they touch your database.
+                  Define strict types for your form keys. Formhop automatically validates email syntax, number ranges, required inputs, and sanitizes unwanted fields before they touch your database.
                 </p>
               </div>
 
@@ -921,7 +921,7 @@ ${activeTemplate.fields
               </div>
               <h3 className="text-base font-bold text-foreground">Create Form &amp; Schema</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Set your form name and add the fields you require. Formsy sets up strict Zod type validation automatically.
+                Set your form name and add the fields you require. Formhop sets up strict Zod type validation automatically.
               </p>
             </Card>
 
@@ -991,7 +991,7 @@ ${activeTemplate.fields
                       ? getReactCode()
                       : sandboxTab === 'curl'
                       ? getCurlCode()
-                      : `<form action="https://api.formsy.dev/submit/contact" method="POST">\n  <input type="text" name="name" required />\n  <input type="email" name="email" required />\n  <button type="submit">Submit</button>\n</form>`
+                      : `<form action="https://api.formhop.dev/submit/contact" method="POST">\n  <input type="text" name="name" required />\n  <input type="email" name="email" required />\n  <button type="submit">Submit</button>\n</form>`
                   copySnippet(code, true)
                 }}
                 className="text-ivory/70 hover:text-ivory hover:bg-ivory/10 gap-1.5 text-xs h-7"
@@ -1008,7 +1008,7 @@ ${activeTemplate.fields
                   : sandboxTab === 'curl'
                   ? getCurlCode()
                   : `<!-- Zero JS required: standard browser submission -->
-<form action="https://api.formsy.dev/submit/${activeTemplate.slug}" method="POST">
+<form action="https://api.formhop.dev/submit/${activeTemplate.slug}" method="POST">
   <!-- Invisible Honeypot Spam Trap -->
   <input type="text" name="_honeypot" style="display:none" tabindex="-1" autocomplete="off" />
 
@@ -1037,7 +1037,7 @@ ${activeTemplate.fields
               Frequently asked questions
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Everything you need to know about Formsy's zero-config form endpoints.
+              Everything you need to know about Formhop's zero-config form endpoints.
             </p>
           </div>
 
@@ -1048,16 +1048,16 @@ ${activeTemplate.fields
                 a: `Every user can create up to ${APP_LIMITS.MAX_FORMS_PER_USER} active forms and receive up to ${APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER} submissions per calendar month free. We have no hidden tiers or paid upgrades.`,
               },
               {
-                q: 'How does Formsy prevent spam submissions?',
-                a: 'Formsy employs a 3-layer security system: an invisible honeypot field trap that silently catches automated bots, Upstash Redis IP rate-limiting (60 req/min), and optional allowed CORS origins so only your domain can POST to your endpoint.',
+                q: 'How does Formhop prevent spam submissions?',
+                a: 'Formhop employs a 3-layer security system: an invisible honeypot field trap that silently catches automated bots, Upstash Redis IP rate-limiting (60 req/min), and optional allowed CORS origins so only your domain can POST to your endpoint.',
               },
               {
                 q: 'How do email alerts work?',
-                a: 'You can enable email notifications on any of your forms from the project settings. When enabled, Formsy uses Resend to immediately forward the submission details to your verified account email address.',
+                a: 'You can enable email notifications on any of your forms from the project settings. When enabled, Formhop uses Resend to immediately forward the submission details to your verified account email address.',
               },
               {
-                q: 'Can I use Formsy with React, Next.js, or plain HTML?',
-                a: 'Yes! Formsy is standard HTTP POST compatible. You can submit using native fetch() in React/Next.js/Astro, or simply point a standard HTML <form action="..."> tag to your Formsy endpoint.',
+                q: 'Can I use Formhop with React, Next.js, or plain HTML?',
+                a: 'Yes! Formhop is standard HTTP POST compatible. You can submit using native fetch() in React/Next.js/Astro, or simply point a standard HTML <form action="..."> tag to your Formhop endpoint.',
               },
               {
                 q: 'Is my data private and secure?',
@@ -1152,9 +1152,9 @@ ${activeTemplate.fields
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <span className="font-bold text-sm text-foreground">Formsy</span>
+              <span className="font-bold text-sm text-foreground">Formhop</span>
               <span className="text-xs text-muted-foreground">
-                &copy; {new Date().getFullYear()} Formsy Inc. All rights reserved.
+                &copy; {new Date().getFullYear()} Formhop Inc. All rights reserved.
               </span>
             </div>
 

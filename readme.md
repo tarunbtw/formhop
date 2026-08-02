@@ -1,6 +1,6 @@
-# Formsy
+# Formhop
 
-Formsy is a self-contained form backend service and developer dashboard. It provides programmatic submission endpoints backed by runtime schema validation, sliding-window rate limiting, honeypot bot defense, SHA-256 IP hashing, asynchronous email notifications, and an inbox management dashboard.
+Formhop is a self-contained form backend service and developer dashboard. It provides programmatic submission endpoints backed by runtime schema validation, sliding-window rate limiting, honeypot bot defense, SHA-256 IP hashing, asynchronous email notifications, and an inbox management dashboard.
 
 The service eliminates boilerplate backend code, custom database migrations, and SMTP server configuration for applications requiring form capture.
 
@@ -11,21 +11,21 @@ The service eliminates boilerplate backend code, custom database migrations, and
 The repository is configured as a pnpm workspace with isolated domains:
 
 ```
-formsy/
+formhop/
 ├── backend/          # Hono HTTP server running on Node.js (Drizzle ORM, PostgreSQL, Better Auth, Upstash Redis)
 ├── frontend/         # Single-page application built with React 18, Vite, and TanStack Query
 ├── sdk/              # Client runtime bundle (0.50KB gzipped vanilla JS)
-├── cli/              # Scaffolding utility (@formsy/init)
+├── cli/              # Scaffolding utility (@formhop/init)
 ├── pnpm-workspace.yaml
 └── package.json
 ```
 
 | Package | Path | Runtime | Purpose |
 | :--- | :--- | :--- | :--- |
-| `@formsy/backend` | `backend/` | Node.js 20+ | Ingestion engine, REST API, Zod compilation, Drizzle ORM, Redis rate limiter, Better Auth session broker. |
-| `@formsy/frontend` | `frontend/` | Browser (Vite SPA) | Visual form builder, submissions inbox, CSV exporter, OAuth authentication, account metrics. |
-| `@formsy/sdk` | `sdk/` | Browser CDN | Drop-in form handler intercepting submissions with built-in validation and honeypot injection. |
-| `@formsy/init` | `cli/` | Node.js CLI | Interactive component scaffolder for React, Next.js, Vue, and vanilla HTML. |
+| `@formhop/backend` | `backend/` | Node.js 20+ | Ingestion engine, REST API, Zod compilation, Drizzle ORM, Redis rate limiter, Better Auth session broker. |
+| `@formhop/frontend` | `frontend/` | Browser (Vite SPA) | Visual form builder, submissions inbox, CSV exporter, OAuth authentication, account metrics. |
+| `@formhop/sdk` | `sdk/` | Browser CDN | Drop-in form handler intercepting submissions with built-in validation and honeypot injection. |
+| `@formhop/init` | `cli/` | Node.js CLI | Interactive component scaffolder for React, Next.js, Vue, and vanilla HTML. |
 
 ---
 
@@ -62,7 +62,7 @@ The pipeline fails fast at every evaluation step. Malformed JSON returns 400, un
 ## Security Model and Countermeasures
 
 ### Honeypot Bot Counter-Intelligence
-Automated scrapers target hidden form fields indiscriminately. When a submission contains a non-empty `_honeypot` attribute, Formsy bypasses database persistence, skips quota decrements, and returns an immediate HTTP 200 with `{"ok": true, "id": "honeypot"}`. Scrapers perceive success, while zero invalid data reaches production storage.
+Automated scrapers target hidden form fields indiscriminately. When a submission contains a non-empty `_honeypot` attribute, Formhop bypasses database persistence, skips quota decrements, and returns an immediate HTTP 200 with `{"ok": true, "id": "honeypot"}`. Scrapers perceive success, while zero invalid data reaches production storage.
 
 ### Sliding-Window Rate Limiting
 Rate limiting is backed by Upstash Redis using the atomic `INCR` and `EXPIRE` pattern on `rl:ip:<ip>` keys with a sixty-second TTL. The threshold allows sixty requests per minute per IP address. If Redis is unavailable or unconfigured, the middleware fails open to ensure zero downtime on public forms.
@@ -71,15 +71,15 @@ Rate limiting is backed by Upstash Redis using the atomic `INCR` and `EXPIRE` pa
 Client IP addresses are never written to disk in plain text. Incoming addresses from the `x-forwarded-for` header are converted into SHA-256 hexadecimal digests before persistence. This permits duplicate identification and pattern tracking while guaranteeing absolute privacy compliance.
 
 ### Origin Restrictions
-Projects can declare an array of allowed origins. When populated, Formsy validates incoming `Origin` headers and rejects cross-site forgeries with HTTP 403 before payload parsing.
+Projects can declare an array of allowed origins. When populated, Formhop validates incoming `Origin` headers and rejects cross-site forgeries with HTTP 403 before payload parsing.
 
 ---
 
 ## Database Schema and Relational Model
 
-PostgreSQL persistence is managed via Drizzle ORM. The relational model is partitioned between Better Auth authentication primitives and Formsy business tables.
+PostgreSQL persistence is managed via Drizzle ORM. The relational model is partitioned between Better Auth authentication primitives and Formhop business tables.
 
-### Formsy Domain Tables
+### Formhop Domain Tables
 
 #### `projects`
 ```sql
@@ -117,7 +117,7 @@ Authentication state is maintained across four tables: `user`, `session`, `accou
 
 ## Platform Limits and Quotas
 
-Formsy operates under hard account constraints enforced at the API layer:
+Formhop operates under hard account constraints enforced at the API layer:
 
 | Resource | Hard Limit | Enforcement Strategy |
 | :--- | :--- | :--- |
@@ -267,7 +267,7 @@ Toggles the read status of an individual submission.
 
 ```typescript
 async function submitInquiry(payload: { name: string; email: string; brief: string }) {
-  const response = await fetch('https://api.formsy.dev/submit/v1-inquiry-slug', {
+  const response = await fetch('https://api.formhop.dev/submit/v1-inquiry-slug', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -285,7 +285,7 @@ async function submitInquiry(payload: { name: string; email: string; brief: stri
 ### 2. Standard HTML5 Submission
 
 ```html
-<form action="https://api.formsy.dev/submit/v1-inquiry-slug" method="POST">
+<form action="https://api.formhop.dev/submit/v1-inquiry-slug" method="POST">
   <!-- Invisible Honeypot Field -->
   <input type="text" name="_honeypot" style="display:none" tabindex="-1" autocomplete="off" />
 
@@ -299,23 +299,23 @@ async function submitInquiry(payload: { name: string; email: string; brief: stri
 </form>
 ```
 
-### 3. Standalone CDN Client (`@formsy/sdk`)
+### 3. Standalone CDN Client (`@formhop/sdk`)
 
-Add the minified 0.50KB bundle to your markup. It automatically binds to forms containing `data-formsy="<slug>"`:
+Add the minified 0.50KB bundle to your markup. It automatically binds to forms containing `data-formhop="<slug>"`:
 
 ```html
-<form data-formsy="v1-inquiry-slug">
+<form data-formhop="v1-inquiry-slug">
   <input name="email" type="email" required />
   <button type="submit">Submit</button>
 </form>
 
-<script src="https://cdn.formsy.dev/formsy.min.js" async></script>
+<script src="https://cdn.formhop.dev/formhop.min.js" async></script>
 ```
 
 Programmatic SDK execution:
 
 ```javascript
-window.Formsy.submit('v1-inquiry-slug', {
+window.Formhop.submit('v1-inquiry-slug', {
   email: 'client@studio.com',
   notes: 'Custom integration inquiry'
 }).then(res => {
@@ -326,7 +326,7 @@ window.Formsy.submit('v1-inquiry-slug', {
 ### 4. Interactive Scaffolding CLI
 
 ```bash
-npx @formsy/init
+npx @formhop/init
 ```
 
 The interactive CLI inspects the target workspace and generates validated form components for React, Next.js, Vue, or static HTML.

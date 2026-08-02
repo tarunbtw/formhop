@@ -14,7 +14,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({
   children,
   defaultTheme = 'light',
-  storageKey = 'formsy-theme',
+  storageKey = 'formhop-theme',
 }: {
   children: ReactNode
   defaultTheme?: Theme

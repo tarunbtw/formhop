@@ -1,9 +1,9 @@
 {
-  "name": "@formsy/init",
+  "name": "@formhop/init",
   "version": "1.0.0",
-  "description": "Scaffold a Formsy form component for your framework",
+  "description": "Scaffold a Formhop form component for your framework",
   "bin": {
-    "@formsy/init": "./dist/index.js"
+    "@formhop/init": "./dist/index.js"
   },
   "type": "module",
   "scripts": {

@@ -68,7 +68,7 @@ app.onError((err, c) => {
 const port = Number(process.env.PORT ?? 3001)
 
 serve({ fetch: app.fetch, port }, () => {
-  console.log(`🚀 Formsy API running on http://localhost:${port}`)
+  console.log(`🚀 Formhop API running on http://localhost:${port}`)
   console.log(`   Health: http://localhost:${port}/health`)
 })
 

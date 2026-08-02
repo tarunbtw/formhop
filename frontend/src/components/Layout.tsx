@@ -31,7 +31,7 @@ export function TopNav() {
               <Layers size={17} strokeWidth={2.5} />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-[17px] text-foreground tracking-tight">Formsy</span>
+              <span className="font-extrabold text-[17px] text-foreground tracking-tight">Formhop</span>
               <span className="badge-pill-subtle">v2.0</span>
             </div>
           </Link>
@@ -85,7 +85,7 @@ export function TopNav() {
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs shadow-xs transition-transform group-hover:scale-105">
             F
           </div>
-          <span className="text-sm font-bold tracking-tight text-foreground">Formsy</span>
+          <span className="text-sm font-bold tracking-tight text-foreground">Formhop</span>
         </Link>
 
         {/* Minimal Navigation Tabs */}
