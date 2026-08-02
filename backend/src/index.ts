@@ -17,16 +17,27 @@ app.use('*', logger())
 app.use('*', secureHeaders())
 app.use('*', trimTrailingSlash())
 
+function normalizeOrigin(origin: string): string {
+  let o = origin.trim().replace(/\/$/, '')
+  if (!/^https?:\/\//i.test(o)) {
+    o = o.startsWith('localhost') || o.startsWith('127.0.0.1') ? `http://${o}` : `https://${o}`
+  }
+  return o
+}
+
 // CORS — allow frontend origin for dashboard API calls and auth routes
 const rawFrontendOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:5173')
   .split(',')
   .map((o) => o.trim())
+  .filter(Boolean)
+  .map(normalizeOrigin)
 
 const corsMiddleware = cors({
   origin: (origin) => {
     if (!origin) return rawFrontendOrigins[0]
-    if (rawFrontendOrigins.includes(origin) || rawFrontendOrigins.includes('*')) return origin
-    if (/^https:\/\/formhop.*\.vercel\.app$/.test(origin)) return origin
+    const cleaned = origin.replace(/\/$/, '')
+    if (rawFrontendOrigins.includes(cleaned) || rawFrontendOrigins.includes('*')) return origin
+    if (/^https:\/\/formhop.*\.vercel\.app$/.test(cleaned)) return origin
     return null
   },
   credentials: true,
