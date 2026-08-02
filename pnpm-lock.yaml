@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      esbuild:
+        specifier: ^0.21.5
+        version: 0.21.5
     devDependencies:
       typescript:
         specifier: ^5.4.5
@@ -29,6 +33,9 @@ importers:
       drizzle-orm:
         specifier: ^0.30.10
         version: 0.30.10(@types/react@18.3.29)(kysely@0.29.8)(pg@8.21.0)(postgres@3.4.9)(react@18.3.1)
+      esbuild:
+        specifier: ^0.21.5
+        version: 0.21.5
       hono:
         specifier: ^4.12.23
         version: 4.12.23
@@ -45,9 +52,6 @@ importers:
       drizzle-kit:
         specifier: ^0.21.4
         version: 0.21.4
-      esbuild:
-        specifier: ^0.21.5
-        version: 0.21.5
       tsx:
         specifier: ^4.15.4
         version: 4.22.3
