@@ -33,7 +33,7 @@ app.use('/submit/*', cors({ origin: '*', allowMethods: ['POST', 'OPTIONS'] }))
 
 // ─── Better Auth Route ──────────────────────────────────────────────────────
 
-app.on(['POST', 'GET'], '/api/auth/**', (c) => auth.handler(c.req.raw))
+app.all('/api/auth/*', (c) => auth.handler(c.req.raw))
 
 // ─── Health Check ───────────────────────────────────────────────────────────
 
