@@ -12,3 +12,4 @@ await build({
 })
 
 console.log('✓ Built backend/dist/index.js')
+
