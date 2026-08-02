@@ -5,8 +5,14 @@ interface RequestOptions {
   params?: Record<string, unknown>
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+
 async function request<T = any>(url: string, options: RequestOptions = {}): Promise<{ data: T }> {
-  let fullUrl = url
+  let fullUrl = url.startsWith('http')
+    ? url
+    : API_BASE_URL
+    ? `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`
+    : url
   if (options.params) {
     const searchParams = new URLSearchParams()
     for (const [key, val] of Object.entries(options.params)) {

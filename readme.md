@@ -301,7 +301,7 @@ async function submitInquiry(payload: { name: string; email: string; brief: stri
 
 ### 3. Standalone CDN Client (`@formhop/sdk`)
 
-Add the minified 0.50KB bundle to your markup. It automatically binds to forms containing `data-formhop="<slug>"`:
+Add the minified 0.52KB bundle to your markup. It automatically binds to forms containing `data-formhop="<slug>"`:
 
 ```html
 <form data-formhop="v1-inquiry-slug">
@@ -309,12 +309,21 @@ Add the minified 0.50KB bundle to your markup. It automatically binds to forms c
   <button type="submit">Submit</button>
 </form>
 
-<script src="https://cdn.formhop.dev/formhop.min.js" async></script>
+<!-- Distributed directly via Vercel edge CDN -->
+<script src="https://formhop.vercel.app/cdn/formhop.min.js" defer></script>
 ```
+
+Alternative CDN endpoints:
+- Minified: `https://formhop.vercel.app/cdn/formhop.min.js`
+- Root bundle: `https://formhop.vercel.app/formhop.min.js`
+- Unminified: `https://formhop.vercel.app/cdn/formhop.js`
 
 Programmatic SDK execution:
 
 ```javascript
+// Point SDK to your production backend
+window.Formhop.init({ baseUrl: 'https://formhop-production.up.railway.app' })
+
 window.Formhop.submit('v1-inquiry-slug', {
   email: 'client@studio.com',
   notes: 'Custom integration inquiry'
@@ -351,6 +360,7 @@ Configuration variables are resolved from system environments or `.env` files:
 | `GOOGLE_CLIENT_ID` | String | Google Cloud OAuth Client ID. |
 | `GOOGLE_CLIENT_SECRET` | String | Google Cloud OAuth Client Secret. |
 | `RESEND_API_KEY` | String | API key for transactional email delivery (`re_...`). |
+| `FRONTEND_URL` | String | Origin(s) allowed for CORS and OAuth redirection (e.g. `https://formhop.vercel.app`). |
 | `API_BASE_URL` | String | Optional public URL override for generated endpoint links. |
 | `PORT` | Number | Server port (default: `3001`). |
 
@@ -358,7 +368,79 @@ Configuration variables are resolved from system environments or `.env` files:
 
 | Variable | Type | Description |
 | :--- | :--- | :--- |
-| `VITE_API_URL` | String | Base backend API URL (`http://localhost:3001` or `/api` via reverse proxy). |
+| `VITE_API_URL` | String | Base backend API URL (`https://formhop-production.up.railway.app` or `http://localhost:3001`). |
+
+---
+
+## Production Deployment
+
+### 1. Backend Service (Railway / Render)
+
+The backend compiles into a self-contained Node.js bundle via `esbuild` (`backend/dist/index.js`), requiring zero build-time TypeScript compilation at runtime.
+
+#### Option A: Railway (Monorepo Root)
+1. Link the repository (`https://github.com/tarunbtw/formhop.git`).
+2. The bundled `railway.json` automatically configures the Nixpacks build and deploy steps:
+   - Build Command: `pnpm --filter @formhop/backend build`
+   - Start Command: `node backend/dist/index.js`
+   - Healthcheck Path: `/health`
+3. Add environment variables in the Railway dashboard:
+   - `DATABASE_URL` (Neon PostgreSQL connection string with `?sslmode=require`)
+   - `REDIS_URL` and `REDIS_TOKEN` (Upstash Redis REST credentials)
+   - `BETTER_AUTH_SECRET` (generate with `openssl rand -hex 32`)
+   - `BETTER_AUTH_URL` (`https://<your-railway-subdomain>.up.railway.app`)
+   - `FRONTEND_URL` (`https://formhop.vercel.app`)
+   - `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+   - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+   - `RESEND_API_KEY`
+   - `NODE_ENV=production`
+
+#### Option B: Railway (Isolated Root Directory)
+If setting Railway **Root Directory** to `backend`:
+- Build Command: `node build.mjs`
+- Start Command: `node dist/index.js`
+- Healthcheck: `/health`
+
+---
+
+### 2. Frontend Application (Vercel)
+
+The frontend is a React 18 single-page application built with Vite and Tailwind CSS.
+
+1. Import the repository on Vercel.
+2. Configure project settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend`
+   - **Build Command**: `pnpm build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `pnpm install`
+3. Add Environment Variable:
+   - `VITE_API_URL`: `https://<your-backend>.up.railway.app`
+4. Client-side SPA routing and CDN static file rewrites are handled automatically via `frontend/vercel.json`.
+
+---
+
+### 3. Edge CDN Distribution
+
+Building the frontend automatically mirrors the vanilla JS SDK bundle to `frontend/public/cdn/` and `frontend/public/`. When deployed on Vercel, the 0.52KB client SDK is cached and served at the edge across global CDN points of presence:
+
+```html
+<!-- Hosted on Vercel Edge -->
+<script src="https://formhop.vercel.app/cdn/formhop.min.js" defer></script>
+```
+
+---
+
+### 4. OAuth Provider Callback URLs
+
+Register the following callback redirect URIs with your OAuth providers:
+
+- **GitHub OAuth App**:
+  - Homepage URL: `https://formhop.vercel.app`
+  - Authorization callback URL: `https://<your-backend>.up.railway.app/api/auth/callback/github`
+- **Google Cloud Console**:
+  - Authorized JavaScript origins: `https://formhop.vercel.app`, `https://<your-backend>.up.railway.app`
+  - Authorized redirect URIs: `https://<your-backend>.up.railway.app/api/auth/callback/google`
 
 ---
 

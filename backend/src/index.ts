@@ -18,8 +18,17 @@ app.use('*', secureHeaders())
 app.use('*', trimTrailingSlash())
 
 // CORS — allow frontend origin for dashboard API calls and auth routes
+const rawFrontendOrigins = (process.env.FRONTEND_URL ?? 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+
 const corsMiddleware = cors({
-  origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  origin: (origin) => {
+    if (!origin) return rawFrontendOrigins[0]
+    if (rawFrontendOrigins.includes(origin) || rawFrontendOrigins.includes('*')) return origin
+    if (/^https:\/\/formhop.*\.vercel\.app$/.test(origin)) return origin
+    return null
+  },
   credentials: true,
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
