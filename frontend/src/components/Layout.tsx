@@ -3,7 +3,6 @@ import {
   FolderPlus,
   LogOut,
   ArrowRight,
-  Layers,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ThemeToggle } from './ui/theme-toggle'
@@ -20,56 +19,63 @@ export function TopNav() {
     navigate('/')
   }
 
-  // Floating pill navbar for Landing Page
+  // Clean sticky navbar for Landing Page (Formspree style)
   if (isLandingPage) {
     return (
-      <header className="floating-nav-wrapper">
-        <nav className="floating-nav">
+      <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/90 backdrop-blur-md transition-colors">
+        <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-2 text-decoration-none">
-            <div className="w-8 h-8 rounded-lg bg-charcoal dark:bg-ivory flex items-center justify-center text-ivory dark:text-charcoal shadow-sm">
-              <Layers size={17} strokeWidth={2.5} />
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs shadow-xs transition-transform group-hover:scale-105">
+              F
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-[17px] text-foreground tracking-tight">Formhop</span>
-              <span className="badge-pill-subtle">v2.0</span>
+              <span className="font-bold text-base tracking-tight text-foreground">Formhop</span>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border">v2.0</span>
             </div>
           </Link>
 
           {/* Landing Page Navigation Links */}
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+          <div className="hidden md:flex items-center gap-6 text-xs sm:text-sm font-medium text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#demo" className="hover:text-foreground transition-colors">Interactive Demo</a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
+            <a href="#code-examples" className="hover:text-foreground transition-colors">Code Examples</a>
             <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle variant="compact" />
 
             {isAuthenticated ? (
-              <Link to="/dashboard" className="btn-pill-dark">
-                <span>Dashboard</span>
-                <ArrowRight size={13} />
+              <Link to="/dashboard">
+                <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold">
+                  <span>Dashboard</span>
+                  <ArrowRight size={13} />
+                </Button>
               </Link>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => loginWithGithub()}
-                  className="btn-pill-ghost"
+                  className="h-8 text-xs font-semibold"
                 >
-                  Log in
-                </button>
-                <a href="#cta" className="btn-pill-dark">
-                  <span>Get started</span>
+                  Sign in
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => loginWithGithub()}
+                  className="h-8 gap-1 text-xs font-semibold"
+                >
+                  <span>Get Started Free</span>
                   <ArrowRight size={13} />
-                </a>
+                </Button>
               </div>
             )}
           </div>
-        </nav>
+        </div>
       </header>
     )
   }
