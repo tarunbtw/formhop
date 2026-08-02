@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
@@ -11,6 +11,9 @@ import {
   ChevronUp,
   Inbox,
 } from 'lucide-react'
+import { Card } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Badge } from '../components/ui/badge'
 
 interface Submission {
   id: string
@@ -61,6 +64,7 @@ export default function SubmissionsPage() {
   const { id } = useParams<{ id: string }>()
   const [page, setPage] = useState(1)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [filterState, setFilterState] = useState<'all' | 'unread' | 'read'>('all')
   const queryClient = useQueryClient()
 
   const { data, isLoading } = useQuery<SubmissionsResponse>({
@@ -81,6 +85,7 @@ export default function SubmissionsPage() {
       api.patch(`/api/projects/${id}/submissions/${submissionId}/read`).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['submissions', id] })
+      queryClient.invalidateQueries({ queryKey: ['analytics'] })
     },
   })
 
@@ -88,202 +93,226 @@ export default function SubmissionsPage() {
   const total = data?.total ?? 0
   const totalPages = data?.totalPages ?? 1
 
+  const filteredSubmissions = submissions.filter((s) => {
+    if (filterState === 'unread') return !s.isRead
+    if (filterState === 'read') return s.isRead
+    return true
+  })
+
   return (
-    <div style={{ flex: 1, padding: 'var(--space-xxl)' }}>
+    <div className="flex-1 p-6 md:p-8 max-w-5xl mx-auto w-full space-y-6">
       {/* Header */}
-      <div style={{ marginBottom: 'var(--space-xxl)' }}>
+      <div className="space-y-4">
         <Link
           to={`/dashboard/projects/${id}`}
-          className="btn-ghost btn-sm flex items-center gap-xs"
-          style={{ marginBottom: 16, color: 'var(--steel)', fontSize: 14, display: 'inline-flex' }}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft size={14} /> {project?.name ?? 'Form'}
+          <ArrowLeft size={14} /> Back to {project?.name ?? 'Form'}
         </Link>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-heading-3" style={{ color: 'var(--ink)' }}>Submissions</h1>
-            <p className="text-caption" style={{ color: 'var(--steel)', marginTop: 4 }}>
-              {total} total · {submissions.filter((s) => !s.isRead).length} unread
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+                Submissions Inbox
+              </h1>
+              <Badge variant="secondary">
+                {total} total
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Verified payload entries received for <strong className="text-foreground">{project?.name}</strong>
             </p>
           </div>
-          <button
-            onClick={() => exportCsv(submissions, project?.name ?? 'submissions')}
-            className="btn btn-secondary btn-sm"
-            disabled={submissions.length === 0}
-          >
-            <Download size={14} />
-            Export CSV
-          </button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={submissions.length === 0}
+              onClick={() => exportCsv(submissions, project?.slug ?? 'form')}
+              className="gap-1.5 h-8 text-xs"
+            >
+              <Download size={13} />
+              <span>Export CSV</span>
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Loading */}
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-1 bg-secondary/60 p-1 rounded-lg border border-border w-fit">
+        <button
+          onClick={() => setFilterState('all')}
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            filterState === 'all'
+              ? 'bg-card text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          All ({total})
+        </button>
+        <button
+          onClick={() => setFilterState('unread')}
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            filterState === 'unread'
+              ? 'bg-card text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Unread
+        </button>
+        <button
+          onClick={() => setFilterState('read')}
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            filterState === 'read'
+              ? 'bg-card text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Read
+        </button>
+      </div>
+
+      {/* Loading Skeleton */}
       {isLoading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="skeleton" style={{ height: 56, borderRadius: 8 }} />
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-16 rounded-xl border border-border bg-card animate-pulse" />
           ))}
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoading && submissions.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-state-icon"><Inbox size={24} /></div>
-          <h3 className="text-heading-5" style={{ color: 'var(--ink)' }}>No submissions yet</h3>
-          <p className="text-body-sm" style={{ color: 'var(--steel)', maxWidth: 360 }}>
-            Once someone submits your form, it'll appear here.
+      {/* Empty State */}
+      {!isLoading && filteredSubmissions.length === 0 && (
+        <div className="rounded-lg border border-dashed border-border p-12 text-center animate-in fade-in-50">
+          <Inbox className="mx-auto h-8 w-8 text-muted-foreground/60 stroke-[1.5]" />
+          <h3 className="mt-3 text-sm font-semibold text-foreground">
+            {filterState === 'all' ? 'No submissions yet' : `No ${filterState} submissions`}
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
+            Submissions sent to your endpoint will appear here in real-time with honeypot verification.
           </p>
         </div>
       )}
 
-      {/* Submissions table */}
-      {!isLoading && submissions.length > 0 && (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th style={{ width: 12, paddingRight: 0 }} />
-                <th>Date</th>
-                <th>Preview</th>
-                <th style={{ width: 100 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.map((s) => (
-                <React.Fragment key={s.id}>
-                  <tr
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => {
-                      setExpandedId(expandedId === s.id ? null : s.id)
-                      if (!s.isRead) markReadMutation.mutate(s.id)
-                    }}
-                  >
-                    {/* Read/unread dot */}
-                    <td style={{ paddingRight: 0, width: 12 }}>
-                      {s.isRead ? (
-                        <Circle size={8} color="var(--hairline)" />
+      {/* Submissions List */}
+      {!isLoading && filteredSubmissions.length > 0 && (
+        <div className="space-y-2">
+          {filteredSubmissions.map((sub) => {
+            const isExpanded = expandedId === sub.id
+            const entries = Object.entries(sub.data)
+            const dateStr = new Date(sub.createdAt).toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+
+            return (
+              <Card
+                key={sub.id}
+                className={`transition-all duration-150 ${
+                  !sub.isRead ? 'border-primary/40 bg-card shadow-xs' : 'bg-card/70'
+                }`}
+              >
+                <div
+                  className="flex items-center justify-between p-4 cursor-pointer select-none"
+                  onClick={() => setExpandedId(isExpanded ? null : sub.id)}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        markReadMutation.mutate(sub.id)
+                      }}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                      title={sub.isRead ? 'Mark unread' : 'Mark read'}
+                    >
+                      {sub.isRead ? (
+                        <CheckCircle2 size={16} className="text-muted-foreground" />
                       ) : (
-                        <Circle size={8} color="var(--brand-green)" fill="var(--brand-green)" />
+                        <Circle size={16} className="text-emerald-500 fill-emerald-500/20" />
                       )}
-                    </td>
+                    </button>
 
-                    {/* Date */}
-                    <td style={{ whiteSpace: 'nowrap', color: 'var(--slate)', fontSize: 13 }}>
-                      {new Date(s.createdAt).toLocaleDateString()}{' '}
-                      <span style={{ color: 'var(--muted)' }}>
-                        {new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </td>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-xs text-foreground truncate">
+                          {String(entries[0]?.[1] ?? 'Submission')}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">· {dateStr}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate font-mono mt-0.5">
+                        {entries.slice(1, 3).map(([k, v]) => `${k}: ${String(v)}`).join(' · ')}
+                      </div>
+                    </div>
+                  </div>
 
-                    {/* Data preview */}
-                    <td>
-                      <span
-                        style={{
-                          fontSize: 13,
-                          color: 'var(--charcoal)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'block',
-                          maxWidth: 400,
-                        }}
-                      >
-                        {Object.entries(s.data)
-                          .slice(0, 3)
-                          .map(([k, v]) => `${k}: ${v}`)
-                          .join(' · ')}
-                      </span>
-                    </td>
+                  <div className="flex items-center gap-2 text-muted-foreground pl-3">
+                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </div>
+                </div>
 
-                    {/* Expand button */}
-                    <td style={{ textAlign: 'right' }}>
-                      <span style={{ color: 'var(--steel)', display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', fontSize: 12 }}>
-                        {expandedId === s.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        {expandedId === s.id ? 'Collapse' : 'Expand'}
-                      </span>
-                    </td>
-                  </tr>
-
-                  {/* Expanded row */}
-                  {expandedId === s.id && (
-                    <tr>
-                      <td colSpan={4} style={{ padding: '0 var(--space-md) var(--space-md)', background: 'var(--surface)' }}>
-                        <div style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--hairline)', overflow: 'hidden' }}>
-                          <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
-                            <tbody>
-                              {Object.entries(s.data).map(([k, v]) => (
-                                <tr key={k}>
-                                  <td
-                                    style={{
-                                      padding: '8px 12px',
-                                      borderBottom: '1px solid var(--hairline-soft)',
-                                      color: 'var(--steel)',
-                                      fontWeight: 500,
-                                      width: '35%',
-                                      whiteSpace: 'nowrap',
-                                      background: 'var(--surface-soft)',
-                                    }}
-                                  >
-                                    {k}
-                                  </td>
-                                  <td
-                                    style={{
-                                      padding: '8px 12px',
-                                      borderBottom: '1px solid var(--hairline-soft)',
-                                      color: 'var(--charcoal)',
-                                      wordBreak: 'break-word',
-                                    }}
-                                  >
-                                    {String(v)}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                {isExpanded && (
+                  <div className="border-t border-border p-4 bg-secondary/30 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {entries.map(([k, v]) => (
+                        <div key={k} className="p-2.5 rounded-lg border border-border bg-card">
+                          <span className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wider block mb-0.5">
+                            {k}
+                          </span>
+                          <span className="text-foreground font-mono whitespace-pre-wrap break-all">
+                            {v == null ? '—' : String(v)}
+                          </span>
                         </div>
-                        {!s.isRead && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); markReadMutation.mutate(s.id) }}
-                            className="btn btn-ghost btn-sm"
-                            style={{ marginTop: 8, fontSize: 12, color: 'var(--brand-green)' }}
-                          >
-                            <CheckCircle2 size={13} /> Mark as read
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 text-[11px] text-muted-foreground border-t border-border">
+                      <span className="font-mono truncate">
+                        SHA-256 IP Digest: {sub.ipHash || 'Anonymized'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => markReadMutation.mutate(sub.id)}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {sub.isRead ? 'Mark as unread' : 'Mark as read'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )
+          })}
         </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between" style={{ marginTop: 'var(--space-xl)' }}>
-          <span className="text-caption" style={{ color: 'var(--steel)' }}>
-            Page {page} of {totalPages} · {total} submissions
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Previous
+          </Button>
+          <span className="text-xs text-muted-foreground font-medium">
+            Page {page} of {totalPages}
           </span>
-          <div className="flex items-center gap-sm">
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => setPage((p) => p - 1)}
-              disabled={page === 1}
-            >
-              Previous
-            </button>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page === totalPages}
-            >
-              Next
-            </button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       )}
     </div>

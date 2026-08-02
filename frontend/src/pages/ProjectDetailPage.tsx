@@ -8,7 +8,6 @@ import {
   Inbox,
   Check,
   ArrowLeft,
-  Code,
   Pencil,
   X,
   Plus,
@@ -16,8 +15,11 @@ import {
 } from 'lucide-react'
 import { toast } from '../components/Toast'
 import { ConfirmModal } from '../components/ConfirmModal'
-
 import { type FieldType, FIELD_TYPES } from '../lib/constants'
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Badge } from '../components/ui/badge'
+import { Input } from '../components/ui/input'
 
 interface Field {
   name: string
@@ -36,6 +38,7 @@ export default function ProjectDetailPage() {
   const [editName, setEditName] = useState('')
   const [editFields, setEditFields] = useState<Field[]>([])
   const [editEmailNotifications, setEditEmailNotifications] = useState(false)
+  const [activeCodeTab, setActiveCodeTab] = useState<'fetch' | 'html' | 'curl'>('fetch')
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
@@ -48,7 +51,8 @@ export default function ProjectDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
       queryClient.invalidateQueries({ queryKey: ['usage'] })
-      toast('Form deleted')
+      queryClient.invalidateQueries({ queryKey: ['analytics'] })
+      toast('Form deleted', 'success')
       navigate('/dashboard')
     },
     onError: () => toast('Failed to delete form', 'error'),
@@ -60,8 +64,9 @@ export default function ProjectDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] })
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['analytics'] })
       setIsEditing(false)
-      toast('Form updated!')
+      toast('Form updated successfully!', 'success')
     },
     onError: () => toast('Failed to update form', 'error'),
   })
@@ -99,442 +104,395 @@ export default function ProjectDetailPage() {
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(f.name))
         return toast(`Field key "${f.name}" must be alphanumeric (letters, numbers, _)`, 'error')
     }
+
     updateMutation.mutate({
-      name: editName,
+      name: editName.trim(),
       schema: editFields,
       email_notifications: editEmailNotifications,
     })
   }
 
-  function copyEndpoint() {
-    if (!project?.endpoint_url) return
+  const copyEndpoint = () => {
+    if (!project) return
     navigator.clipboard.writeText(project.endpoint_url).then(() => {
       setCopied(true)
+      toast('Endpoint URL copied!')
       setTimeout(() => setCopied(false), 2000)
     })
   }
 
   if (isLoading) {
     return (
-      <div style={{ flex: 1, padding: 'var(--space-xxl)' }}>
-        <div className="skeleton" style={{ height: 200, borderRadius: 'var(--radius-lg)', marginBottom: 24 }} />
-        <div className="skeleton" style={{ height: 120, borderRadius: 'var(--radius-lg)' }} />
+      <div className="flex-1 p-8 max-w-5xl mx-auto space-y-4">
+        <div className="h-8 w-40 bg-card rounded-md animate-pulse" />
+        <div className="h-48 rounded-xl bg-card border border-border animate-pulse" />
       </div>
     )
   }
 
-  if (!project) return null
+  if (!project) {
+    return (
+      <div className="flex-1 p-8 text-center max-w-md mx-auto my-20 space-y-4">
+        <p className="text-muted-foreground text-sm">Form not found or has been deleted.</p>
+        <Link to="/dashboard">
+          <Button variant="outline" size="sm">Back to Dashboard</Button>
+        </Link>
+      </div>
+    )
+  }
 
-  const schema = project.schema as Field[]
-
-  const exampleSnippet = `// Vanilla JS
-fetch('${project.endpoint_url}', {
+  const fetchCode = `fetch('${project.endpoint_url}', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-${schema.map((f) => `    ${f.name}: '...'`).join(',\n')},
-  }),
-})
-.then(r => r.json())
-.then(console.log)
-
-// CDN snippet
-Formsy.submit('${project.slug}', {
-${schema.map((f) => `  ${f.name}: '...'`).join(',\n')},
+${(project.schema as Field[])
+  .map((f) => `    ${f.name}: "value"`)
+  .join(',\n')}
+  })
 })`
 
-  return (
-    <div style={{ flex: 1, padding: 'var(--space-xxl)', maxWidth: 760 }}>
-      {/* Header */}
-      <div style={{ marginBottom: 'var(--space-xxl)' }}>
-        <Link
-          to="/dashboard"
-          className="btn-ghost btn-sm flex items-center gap-xs"
-          style={{ marginBottom: 16, color: 'var(--steel)', fontSize: 14, display: 'inline-flex' }}
-        >
-          <ArrowLeft size={14} /> All forms
-        </Link>
+  const htmlCode = `<form action="${project.endpoint_url}" method="POST">
+  <!-- Invisible honeypot trap -->
+  <input type="text" name="_honeypot" style="display:none" tabindex="-1" autocomplete="off" />
+${(project.schema as Field[])
+  .map(
+    (f) => `  <label for="${f.name}">${f.label}</label>
+  <input id="${f.name}" name="${f.name}" type="${f.type === 'email' ? 'email' : 'text'}" ${f.required ? 'required ' : ''}/>`
+  )
+  .join('\n')}
+  <button type="submit">Submit</button>
+</form>`
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-heading-3" style={{ color: 'var(--ink)' }}>{project.name}</h1>
-            <div className="flex items-center gap-sm" style={{ marginTop: 6 }}>
-              <p className="text-caption" style={{ color: 'var(--steel)' }}>
-                {schema.length} fields · {project.submission_count} submissions
-              </p>
-              <span className="text-caption" style={{ color: 'var(--hairline-dark)' }}>·</span>
+  const curlCode = `curl -X POST ${project.endpoint_url} \\
+  -H "Content-Type: application/json" \\
+  -d '{
+${(project.schema as Field[])
+  .map((f) => `    "${f.name}": "sample"`)
+  .join(',\n')}
+  }'`
+
+  return (
+    <div className="flex-1 p-6 md:p-8 max-w-5xl mx-auto w-full space-y-8">
+      {/* Navigation & Header */}
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard')}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft size={14} /> Back to Forms
+        </button>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+                {project.name}
+              </h1>
+              <Badge variant="outline" className="font-mono text-xs">
+                {(project.schema as Field[]).length} fields
+              </Badge>
               {project.emailNotifications ? (
-                <span className="badge badge-success flex items-center gap-xs" style={{ fontSize: 11 }}>
-                  <Mail size={11} /> Alerts ON
-                </span>
+                <Badge variant="success" className="gap-1 text-xs">
+                  <Mail size={12} /> Alerts Active
+                </Badge>
               ) : (
-                <span className="badge badge-surface flex items-center gap-xs" style={{ fontSize: 11, opacity: 0.65 }}>
-                  <Mail size={11} /> Alerts OFF
-                </span>
+                <Badge variant="secondary" className="gap-1 text-xs opacity-70">
+                  <Mail size={12} /> Alerts Muted
+                </Badge>
               )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Created on {new Date(project.createdAt).toLocaleDateString()} · Endpoint ID: <code className="font-mono">{project.slug}</code>
+            </p>
           </div>
-          <div className="flex items-center gap-sm">
-            <button
-              onClick={openEdit}
-              className="btn btn-secondary btn-sm"
-            >
-              <Pencil size={14} /> Edit
-            </button>
-            <Link
-              to={`/dashboard/projects/${id}/submissions`}
-              className="btn btn-secondary btn-sm"
-            >
-              <Inbox size={14} /> Submissions
+
+          <div className="flex items-center gap-2">
+            <Link to={`/dashboard/projects/${project.id}/submissions`}>
+              <Button size="sm" variant="default" className="gap-2">
+                <Inbox size={15} />
+                <span>Inbox ({project.submissionCount})</span>
+              </Button>
             </Link>
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="btn btn-danger btn-sm"
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={isEditing ? () => setIsEditing(false) : openEdit}
+              className="gap-1.5"
             >
-              <Trash2 size={14} />
-            </button>
+              {isEditing ? <X size={14} /> : <Pencil size={14} />}
+              <span>{isEditing ? 'Cancel Edit' : 'Edit Schema'}</span>
+            </Button>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowDeleteModal(true)}
+              className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-9 w-9 p-0"
+              title="Delete Form"
+            >
+              <Trash2 size={16} />
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Endpoint URL */}
-      <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
-        <div className="flex items-center gap-xs" style={{ marginBottom: 'var(--space-sm)' }}>
-          <Code size={16} color="var(--brand-green)" />
-          <h2 className="text-body-sm-med" style={{ color: 'var(--ink)' }}>Endpoint URL</h2>
-        </div>
-        <p className="text-caption" style={{ color: 'var(--steel)', marginBottom: 12 }}>
-          POST JSON to this URL from any site or script.
-        </p>
-        <div
-          className="flex items-center gap-sm"
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--hairline)',
-            borderRadius: 'var(--radius-md)',
-            padding: 'var(--space-sm) var(--space-md)',
-          }}
-        >
-          <code
-            className="flex-1"
-            style={{
-              fontFamily: 'Geist Mono, monospace',
-              fontSize: 13,
-              color: 'var(--charcoal)',
-              wordBreak: 'break-all',
-            }}
-          >
-            {project.endpoint_url}
-          </code>
-          <button
-            onClick={copyEndpoint}
-            className="btn btn-primary btn-sm"
-            style={{ flexShrink: 0 }}
-          >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
-      </div>
+      {/* Endpoint Bar Card */}
+      <Card className="p-4 bg-secondary/40 border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Badge variant="secondary" className="font-mono text-[11px] shrink-0">
+              POST
+            </Badge>
+            <code className="text-xs sm:text-sm font-mono text-foreground truncate select-all">
+              {project.endpoint_url}
+            </code>
+          </div>
 
-      {/* Code example */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
-        <div className="code-block">
-          <div className="code-block-header">
-            <span className="code-block-header-label">Integration example</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={copyEndpoint}
+            className="gap-1.5 shrink-0 self-start sm:self-auto h-8 text-xs"
+          >
+            {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+            <span>{copied ? 'Copied' : 'Copy Endpoint'}</span>
+          </Button>
+        </div>
+      </Card>
+
+      {/* Editing Mode */}
+      {isEditing ? (
+        <Card className="border-ring/60 shadow-md">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Edit Form Schema &amp; Notifications</CardTitle>
+            <CardDescription className="text-xs">
+              Update field names, requirements, and Resend notification toggles.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
+                Form Name
+              </label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Form Name"
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+                  <Mail size={16} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Email Notifications via Resend</p>
+                  <p className="text-[11px] text-muted-foreground">Receive instant alerts on your verified account email</p>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={editEmailNotifications}
+                onChange={(e) => setEditEmailNotifications(e.target.checked)}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground">Fields</span>
+                <Button type="button" variant="outline" size="sm" onClick={addField} className="h-7 text-xs gap-1">
+                  <Plus size={12} /> Add Field
+                </Button>
+              </div>
+
+              {editFields.map((f, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-2 rounded-lg border border-border bg-card p-3"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 w-full">
+                    <Input
+                      placeholder="key (e.g. email)"
+                      value={f.name}
+                      onChange={(e) => updateField(i, { name: e.target.value })}
+                      className="font-mono text-xs"
+                    />
+                    <Input
+                      placeholder="label (e.g. Email)"
+                      value={f.label}
+                      onChange={(e) => updateField(i, { label: e.target.value })}
+                      className="text-xs"
+                    />
+                    <select
+                      value={f.type}
+                      onChange={(e) => updateField(i, { type: e.target.value as FieldType })}
+                      className="h-9 rounded-lg border border-border bg-card px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      {FIELD_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-3 self-end sm:self-center">
+                    <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={f.required}
+                        onChange={(e) => updateField(i, { required: e.target.checked })}
+                        className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-ring"
+                      />
+                      <span>Required</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeField(i)}
+                      className="text-muted-foreground hover:text-red-500 p-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={saveEdit} disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Schema Read-only Inspector */
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Schema Definition</CardTitle>
+            <CardDescription className="text-xs">
+              Incoming JSON submissions are validated against these types by Zod before persisting.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border border-t border-border">
+              {(project.schema as Field[]).map((f) => (
+                <div
+                  key={f.name}
+                  className="flex items-center justify-between p-4 text-xs hover:bg-secondary/20 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <code className="font-mono font-semibold text-foreground bg-secondary px-2 py-1 rounded-md">
+                      {f.name}
+                    </code>
+                    <span className="text-muted-foreground">{f.label}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="font-mono text-[10px]">
+                      {f.type}
+                    </Badge>
+                    {f.required ? (
+                      <Badge variant="destructive" className="text-[10px]">Required</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px] opacity-75">Optional</Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Integration Code Snippets Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <div>
+            <CardTitle className="text-base font-semibold">Integration Snippets</CardTitle>
+            <CardDescription className="text-xs">
+              Copy-paste ready implementation code for your stack.
+            </CardDescription>
+          </div>
+
+          <div className="flex items-center gap-1 bg-secondary p-1 rounded-lg border border-border">
             <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => navigator.clipboard.writeText(exampleSnippet).then(() => toast('Copied!'))}
-              style={{ color: 'var(--on-dark-muted)', fontSize: 12, padding: '2px 8px', borderRadius: 4, border: '1px solid var(--hairline-dark)' }}
+              onClick={() => setActiveCodeTab('fetch')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                activeCodeTab === 'fetch'
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Fetch / React
+            </button>
+            <button
+              onClick={() => setActiveCodeTab('html')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                activeCodeTab === 'html'
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              HTML Form
+            </button>
+            <button
+              onClick={() => setActiveCodeTab('curl')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                activeCodeTab === 'curl'
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              cURL
+            </button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="relative rounded-lg bg-charcoal text-ivory p-4 font-mono text-xs overflow-x-auto border border-border">
+            <button
+              onClick={() => {
+                const code =
+                  activeCodeTab === 'fetch'
+                    ? fetchCode
+                    : activeCodeTab === 'html'
+                    ? htmlCode
+                    : curlCode
+                navigator.clipboard.writeText(code)
+                toast('Code snippet copied!')
+              }}
+              className="absolute right-3 top-3 px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white text-[11px] transition-colors"
             >
               Copy
             </button>
+            <pre className="m-0 leading-relaxed">
+              {activeCodeTab === 'fetch'
+                ? fetchCode
+                : activeCodeTab === 'html'
+                ? htmlCode
+                : curlCode}
+            </pre>
           </div>
-          <div className="code-block-body">
-            <pre>{exampleSnippet}</pre>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Email Notifications */}
-      <div
-        className="card"
-        style={{
-          marginBottom: 'var(--space-xxl)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: 'var(--space-lg) var(--space-xl)',
-        }}
-      >
-        <div>
-          <div className="flex items-center gap-sm" style={{ marginBottom: 4 }}>
-            <h3 className="text-body-md-med" style={{ color: 'var(--ink)' }}>Email notifications</h3>
-            <span className={`badge ${project.emailNotifications ? 'badge-success' : 'badge-surface'}`}>
-              {project.emailNotifications ? 'Active' : 'Disabled'}
-            </span>
-          </div>
-          <p className="text-body-sm" style={{ color: 'var(--steel)' }}>
-            {project.emailNotifications
-              ? 'Sending an instant email alert via Resend on every submission.'
-              : 'Disabled by default. Turn this on to receive an email alert via Resend whenever someone submits.'}
-          </p>
-        </div>
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={project.emailNotifications}
-            disabled={updateMutation.isPending}
-            onChange={(e) => {
-              const nextVal = e.target.checked
-              updateMutation.mutate(
-                { email_notifications: nextVal },
-                {
-                  onSuccess: () => {
-                    toast(nextVal ? 'Email notifications enabled!' : 'Email notifications disabled')
-                  },
-                }
-              )
-            }}
-          />
-          <span className="toggle-track" />
-        </label>
-      </div>
-
-      {/* Schema */}
-      <div className="card">
-        <h2 className="text-body-sm-med" style={{ color: 'var(--ink)', marginBottom: 16 }}>
-          Form schema
-        </h2>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Field key</th>
-                <th>Label</th>
-                <th>Type</th>
-                <th>Required</th>
-              </tr>
-            </thead>
-            <tbody>
-              {schema.map((f) => (
-                <tr key={f.name}>
-                  <td><code className="code-inline" style={{ fontSize: 12 }}>{f.name}</code></td>
-                  <td style={{ color: 'var(--slate)' }}>{f.label}</td>
-                  <td>
-                    <span className="badge badge-surface">{f.type}</span>
-                  </td>
-                  <td>
-                    {f.required ? (
-                      <span className="badge badge-error">Required</span>
-                    ) : (
-                      <span style={{ color: 'var(--muted)', fontSize: 13 }}>Optional</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ─── Delete Modal ───────────────────────────────────────────────── */}
       <ConfirmModal
         isOpen={showDeleteModal}
+        title="Delete Form Endpoint?"
+        message={`Are you sure you want to delete "${project.name}"? All associated submission records will be permanently removed.`}
+        confirmLabel="Delete Form"
         danger
-        title={`Delete "${project.name}"?`}
-        message="All submissions will be permanently removed. This cannot be undone. Your monthly submission quota will still reflect these submissions for the rest of the month."
-        confirmLabel={deleteMutation.isPending ? 'Deleting…' : 'Delete form'}
         loading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate()}
         onCancel={() => setShowDeleteModal(false)}
       />
-
-      {/* ─── Edit Modal ────────────────────────────────────────────────── */}
-      {isEditing && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-          }}
-          onClick={() => setIsEditing(false)}
-        >
-          {/* Backdrop — solid dark, no blur */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0,0,0,0.75)',
-          }} />
-
-          {/* Panel */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              background: '#ffffff',
-              border: '1px solid #e5e5e5',
-              borderRadius: 'var(--radius-xl)',
-              padding: 32,
-              width: '100%',
-              maxWidth: 560,
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-              animation: 'modal-in 180ms cubic-bezier(0.34,1.56,0.64,1)',
-            }}
-          >
-            <div className="flex items-center justify-between" style={{ marginBottom: 24 }}>
-              <h2 className="text-heading-5" style={{ color: 'var(--ink)' }}>Edit form</h2>
-              <button className="btn-ghost" style={{ padding: 6, borderRadius: 6, color: 'var(--steel)' }} onClick={() => setIsEditing(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Name */}
-            <div style={{ marginBottom: 24 }}>
-              <label className="text-caption" style={{ display: 'block', color: 'var(--steel)', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Form name
-              </label>
-              <input
-                className="input"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="My contact form"
-                style={{ width: '100%' }}
-              />
-            </div>
-
-            {/* Fields */}
-            <div style={{ marginBottom: 20 }}>
-              <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                <label className="text-caption" style={{ color: 'var(--steel)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                  Fields ({editFields.length})
-                </label>
-                <button className="btn btn-secondary btn-sm" onClick={addField}>
-                  <Plus size={13} /> Add field
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {editFields.map((field, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      background: 'var(--surface)',
-                      border: '1px solid var(--hairline)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: 14,
-                    }}
-                  >
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                      <div>
-                        <label className="text-caption" style={{ display: 'block', color: 'var(--steel)', marginBottom: 4, fontSize: 11 }}>Key</label>
-                        <input
-                          className="input"
-                          value={field.name}
-                          onChange={(e) => updateField(i, { name: e.target.value })}
-                          placeholder="field_name"
-                          style={{ width: '100%', fontSize: 13 }}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-caption" style={{ display: 'block', color: 'var(--steel)', marginBottom: 4, fontSize: 11 }}>Label</label>
-                        <input
-                          className="input"
-                          value={field.label}
-                          onChange={(e) => updateField(i, { label: e.target.value })}
-                          placeholder="Display label"
-                          style={{ width: '100%', fontSize: 13 }}
-                        />
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 10, alignItems: 'center' }}>
-                      <select
-                        className="input"
-                        value={field.type}
-                        onChange={(e) => updateField(i, { type: e.target.value as Field['type'] })}
-                        style={{ fontSize: 13 }}
-                      >
-                        {FIELD_TYPES.map((t) => (
-                          <option key={t.value} value={t.value}>{t.label}</option>
-                        ))}
-                      </select>
-                      <label className="flex items-center gap-xs" style={{ fontSize: 13, color: 'var(--slate)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                        <input
-                          type="checkbox"
-                          checked={field.required}
-                          onChange={(e) => updateField(i, { required: e.target.checked })}
-                        />
-                        Required
-                      </label>
-                      <button
-                        className="btn-ghost"
-                        onClick={() => removeField(i)}
-                        style={{ color: 'var(--brand-error)', padding: 4, borderRadius: 4 }}
-                        title="Remove field"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Email notifications in edit modal */}
-            <div
-              className="flex items-center justify-between"
-              style={{
-                padding: '12px 14px',
-                background: 'var(--surface)',
-                border: '1px solid var(--hairline)',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: 24,
-              }}
-            >
-              <div>
-                <p className="text-body-sm-med" style={{ color: 'var(--ink)' }}>Email notifications</p>
-                <p className="text-caption" style={{ color: 'var(--steel)' }}>
-                  Receive an instant email alert via Resend on new submissions
-                </p>
-              </div>
-              <label className="toggle">
-                <input
-                  type="checkbox"
-                  checked={editEmailNotifications}
-                  onChange={(e) => setEditEmailNotifications(e.target.checked)}
-                />
-                <span className="toggle-track" />
-              </label>
-            </div>
-
-            <div className="flex items-center gap-sm" style={{ justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={saveEdit}
-                disabled={updateMutation.isPending}
-              >
-                {updateMutation.isPending ? 'Saving…' : 'Save changes'}
-              </button>
-            </div>
-          </div>
-
-          <style>{`
-            @keyframes modal-in {
-              from { opacity: 0; transform: scale(0.95) translateY(8px); }
-              to   { opacity: 1; transform: scale(1)    translateY(0); }
-            }
-          `}</style>
-        </div>
-      )}
     </div>
   )
 }

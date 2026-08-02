@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { db, projects, submissions } from '../db'
-import { eq, and, count, sql } from 'drizzle-orm'
+import { eq, and, count, sql, gte } from 'drizzle-orm'
 import { randomBytes } from 'crypto'
 import { CreateProjectSchema, UpdateProjectSchema } from '../schemas'
 import { authMiddleware } from '../middleware/auth'
@@ -49,6 +49,111 @@ projectsRouter.get('/usage', async (c) => {
       limit: APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER,
       remaining: Math.max(0, APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER - monthlySubmissions),
     },
+  })
+})
+
+// ─── GET /api/projects/analytics ─────────────────────────────────────────────
+// Aggregated submission trends, forms performance, and real-time activity feed
+
+projectsRouter.get('/analytics', async (c) => {
+  const { userId } = c.get('user')
+
+  // 1. Get user forms with submission counts
+  const userProjects = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      slug: projects.slug,
+      submissionCount: count(submissions.id),
+    })
+    .from(projects)
+    .leftJoin(submissions, eq(submissions.projectId, projects.id))
+    .where(eq(projects.userId, userId))
+    .groupBy(projects.id)
+
+  const totalSubmissions = userProjects.reduce((acc, p) => acc + Number(p.submissionCount), 0)
+
+  // 2. Daily breakdown for the last 14 days
+  const dailyRows = await db
+    .select({
+      day: sql<string>`TO_CHAR(DATE_TRUNC('day', ${submissions.createdAt}), 'YYYY-MM-DD')`,
+      count: count(submissions.id),
+    })
+    .from(submissions)
+    .innerJoin(projects, eq(submissions.projectId, projects.id))
+    .where(
+      and(
+        eq(projects.userId, userId),
+        gte(submissions.createdAt, sql`NOW() - INTERVAL '14 days'`)
+      )
+    )
+    .groupBy(sql`DATE_TRUNC('day', ${submissions.createdAt})`)
+    .orderBy(sql`DATE_TRUNC('day', ${submissions.createdAt}) ASC`)
+
+  // Fill in all 14 days so charts render smoothly
+  const timeline: Array<{ date: string; label: string; count: number }> = []
+  const dailyMap = new Map<string, number>()
+  for (const row of dailyRows) {
+    dailyMap.set(row.day, Number(row.count))
+  }
+
+  const now = new Date()
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const ymd = d.toISOString().slice(0, 10)
+    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    timeline.push({
+      date: ymd,
+      label,
+      count: dailyMap.get(ymd) ?? 0,
+    })
+  }
+
+  // 3. Count unread submissions
+  const [{ value: unreadCount }] = await db
+    .select({ value: count() })
+    .from(submissions)
+    .innerJoin(projects, eq(submissions.projectId, projects.id))
+    .where(and(eq(projects.userId, userId), eq(submissions.isRead, false)))
+
+  // 4. Recent submissions stream
+  const recentSubmissions = await db
+    .select({
+      id: submissions.id,
+      projectId: submissions.projectId,
+      projectName: projects.name,
+      data: submissions.data,
+      isRead: submissions.isRead,
+      createdAt: submissions.createdAt,
+    })
+    .from(submissions)
+    .innerJoin(projects, eq(submissions.projectId, projects.id))
+    .where(eq(projects.userId, userId))
+    .orderBy(sql`${submissions.createdAt} DESC`)
+    .limit(6)
+
+  const monthlySubmissions = await getMonthlySubmissionCount(userId)
+
+  return c.json({
+    summary: {
+      totalSubmissions,
+      monthlySubmissions,
+      monthlyLimit: APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER,
+      activeForms: userProjects.length,
+      formLimit: APP_LIMITS.MAX_FORMS_PER_USER,
+      unreadCount: Number(unreadCount),
+      readCount: Math.max(0, totalSubmissions - Number(unreadCount)),
+    },
+    timeline,
+    byProject: userProjects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      count: Number(p.submissionCount),
+      percentage: totalSubmissions > 0 ? Math.round((Number(p.submissionCount) / totalSubmissions) * 100) : 0,
+    })),
+    recentSubmissions,
   })
 })
 

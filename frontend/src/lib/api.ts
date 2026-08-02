@@ -63,6 +63,7 @@ export const projectsApi = {
     api.patch(`/api/projects/${id}`, data).then((r) => r.data),
   delete: (id: string) => api.delete(`/api/projects/${id}`).then((r) => r.data),
   usage: () => api.get('/api/projects/usage').then((r) => r.data),
+  analytics: () => api.get('/api/projects/analytics').then((r) => r.data),
 }
 
 export const submissionsApi = {

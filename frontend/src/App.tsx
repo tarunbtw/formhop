@@ -7,8 +7,9 @@ import {
 } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './components/Toast'
-import { TopNav, DashboardSidebar } from './components/Layout'
+import { TopNav } from './components/Layout'
 import LandingPage from './pages/LandingPage'
 import DashboardPage from './pages/DashboardPage'
 import NewProjectPage from './pages/NewProjectPage'
@@ -63,13 +64,12 @@ function RequireAuth() {
   return <Outlet />
 }
 
-// Dashboard layout with sidebar
+// Dashboard clean full-width layout
 function DashboardLayout() {
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)' }}>
-      <DashboardSidebar />
+    <main className="min-h-[calc(100vh-3.5rem)] bg-background">
       <Outlet />
-    </div>
+    </main>
   )
 }
 
@@ -102,13 +102,15 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <ToastProvider>
-            <AppRoutes />
-          </ToastProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <ThemeProvider defaultTheme="light">
+        <BrowserRouter>
+          <AuthProvider>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

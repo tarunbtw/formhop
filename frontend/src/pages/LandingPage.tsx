@@ -23,6 +23,11 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { APP_LIMITS } from '../lib/constants'
+import { Card, CardContent } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Badge } from '../components/ui/badge'
+import { Input } from '../components/ui/input'
+import { ThemeToggle } from '../components/ui/theme-toggle'
 
 type TemplateKey = 'feedback' | 'event' | 'job'
 
@@ -221,12 +226,12 @@ export function ${activeTemplate.name.replace(/\s+/g, '')}() {
 ${activeTemplate.fields
   .map(
     (f) => `      <div>
-        <label className="text-xs font-semibold text-slate-700">${f.label}</label>
+        <label className="text-xs font-semibold text-foreground/80">${f.label}</label>
         <input name="${f.key}" type="${f.type === 'select' ? 'text' : f.type}" ${f.required ? 'required ' : ''}className="w-full border rounded-lg px-3 py-2" />
       </div>`
   )
   .join('\n')}
-      <button type="submit" disabled={status === 'loading'} className="bg-slate-900 text-white rounded-full px-5 py-2">
+      <button type="submit" disabled={status === 'loading'} className="bg-primary text-primary-foreground rounded-full px-5 py-2">
         {status === 'loading' ? 'Submitting...' : 'Submit'}
       </button>
     </form>
@@ -235,27 +240,70 @@ ${activeTemplate.fields
   }
 
   return (
-    <div style={{ background: '#FFFFFF', color: 'var(--ink)' }}>
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
+      {/* ─── Top Floating Pill Navigation (Fillout Style) ────────────────── */}
+      <header className="sticky top-4 z-50 px-4 mb-[-72px] pointer-events-none">
+        <div className="max-w-6xl mx-auto flex items-center justify-between h-14 px-4 sm:px-6 rounded-full border border-border/80 bg-background/85 dark:bg-card/85 backdrop-blur-md shadow-lg pointer-events-auto transition-all">
+          {/* Brand */}
+          <Link to="/" className="flex items-center gap-2.5 font-bold text-base text-foreground group">
+            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-xs transition-transform group-hover:scale-105">
+              F
+            </div>
+            <span className="tracking-tight text-foreground font-bold">Formsy</span>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border">
+              v2.0
+            </span>
+          </Link>
+
+          {/* Nav links */}
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+            <a href="#demo" className="hover:text-foreground transition-colors">Interactive Demo</a>
+            <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
+            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
+
+            {!isLoading && isAuthenticated ? (
+              <Link to="/dashboard">
+                <Button size="sm" className="rounded-full shadow-xs gap-1.5 text-xs font-semibold">
+                  <LayoutDashboard size={14} />
+                  <span>Dashboard</span>
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => loginWithGithub()}
+                  className="text-xs font-semibold px-3 py-1.5 text-foreground/80 hover:text-foreground transition-colors"
+                >
+                  Sign in
+                </button>
+                <Button
+                  size="sm"
+                  onClick={() => loginWithGithub()}
+                  className="rounded-full shadow-xs gap-1 text-xs font-semibold"
+                >
+                  <span>Start free</span>
+                  <ArrowRight size={13} />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
       {/* ─── Hero Section with Fillout Aesthetic & Pinterest Art Cover ───── */}
       <section className="hero-cover-section">
         <div className="hero-cover-overlay" />
 
         <div className="hero-cover-content">
           {authError && (
-            <div
-              style={{
-                maxWidth: 480,
-                margin: '0 auto 20px',
-                background: 'rgba(239, 68, 68, 0.95)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '10px 16px',
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontWeight: 600,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-              }}
-            >
+            <div className="max-w-md mx-auto mb-5 p-3 rounded-xl bg-destructive text-destructive-foreground text-xs font-semibold shadow-lg">
               {authError === 'session_expired'
                 ? 'Your session expired. Please sign in again.'
                 : 'Authentication failed. Please try again.'}
@@ -267,7 +315,7 @@ ${activeTemplate.fields
 
           {/* Subtitle */}
           <p className="hero-subtitle-white">
-            Describe the form you need and go live in minutes.
+            Describe the form you need and go live in minutes. Zero backend required.
           </p>
 
           {/* ─── Hero AI Prompt Creation Card (Fillout Signature Box) ───────── */}
@@ -281,28 +329,21 @@ ${activeTemplate.fields
             />
 
             <div className="hero-prompt-footer">
-              <div className="flex items-center gap-xs">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   title="Form attachment / schema options"
                   onClick={() => setPromptText('Waitlist signup with name, work email, and referral source')}
-                  style={{
-                    color: '#64748B',
-                    padding: 6,
-                    borderRadius: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                  }}
+                  className="text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-secondary transition-colors"
                 >
-                  <Paperclip size={17} />
+                  <Paperclip size={16} />
                 </button>
-                <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>
+                <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
                   Schema-validated endpoint
                 </span>
               </div>
 
-              <div className="flex items-center gap-sm">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handlePromptCreate}
@@ -342,59 +383,59 @@ ${activeTemplate.fields
 
           {/* Sub Link */}
           <a href="#demo" className="hero-blank-link">
-            Prefer drag and drop? Start a blank form &rarr;
+            Prefer custom code? Explore live interactive demo &darr;
           </a>
         </div>
       </section>
 
       {/* ─── Floating Feature Category Dock (Fillout Style Dock) ─────────── */}
-      <div className="container" style={{ position: 'relative' }}>
+      <div className="max-w-5xl mx-auto px-4 relative">
         <div className="feature-dock">
           <div className="dock-item">
-            <CheckCircle2 size={16} color="var(--brand-green-deep)" />
+            <CheckCircle2 size={16} className="text-emerald-500" />
             <span>Type Validation</span>
           </div>
           <div className="dock-item">
-            <Shield size={16} color="#6366F1" />
+            <Shield size={16} className="text-indigo-500" />
             <span>Spam Fortress</span>
           </div>
           <div className="dock-item">
-            <Mail size={16} color="#EC4899" />
+            <Mail size={16} className="text-pink-500" />
             <span>Resend Alerts</span>
           </div>
           <div className="dock-item">
-            <Zap size={16} color="#F59E0B" />
+            <Zap size={16} className="text-amber-500" />
             <span>Rate Limiting</span>
           </div>
           <div className="dock-item">
-            <Code2 size={16} color="#0EA5E9" />
+            <Code2 size={16} className="text-sky-500" />
             <span>0.5KB Embed</span>
           </div>
           <div className="dock-item">
-            <Download size={16} color="#10B981" />
+            <Download size={16} className="text-emerald-500" />
             <span>CSV Submissions</span>
           </div>
         </div>
       </div>
 
-      {/* ─── Interactive Product Preview (Sliding Up Into View) ───────────── */}
-      <section id="demo" style={{ paddingTop: 80, paddingBottom: 60, background: '#FFFFFF' }}>
-        <div className="container">
+      {/* ─── Interactive Product Preview ─────────────────────────────────── */}
+      <section id="demo" className="py-20 md:py-24 bg-background transition-colors">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* Section Heading */}
-          <div style={{ textAlign: 'center', maxWidth: 620, margin: '0 auto 40px' }}>
-            <span className="badge badge-green" style={{ marginBottom: 12 }}>
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <Badge variant="outline" className="mb-3 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               Interactive Sandbox
-            </span>
-            <h2 className="text-display-lg" style={{ marginBottom: 12 }}>
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
               Live interactive endpoint preview
             </h2>
-            <p className="text-subtitle">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Try submitting below. Formsy validates fields, blocks honeypot spam, records the payload, and notifies via Resend.
             </p>
           </div>
 
           {/* Browser Mockup Centerpiece */}
-          <div className="browser-mockup" style={{ maxWidth: 960, margin: '0 auto' }}>
+          <div className="browser-mockup">
             {/* Top Chrome Bar */}
             <div className="browser-topbar">
               <div className="browser-dots">
@@ -402,96 +443,68 @@ ${activeTemplate.fields
                 <div className="browser-dot yellow" />
                 <div className="browser-dot green" />
               </div>
+
               <div className="browser-address">
-                <Lock size={11} color="var(--brand-green-deep)" />
+                <Lock size={11} className="text-emerald-500" />
                 <span>https://api.formsy.dev/submit/{activeTemplate.slug}</span>
               </div>
-              <div className="flex items-center gap-xs">
-                <button
-                  onClick={() => setPreviewTab('form')}
-                  className="btn btn-sm"
-                  style={{
-                    background: previewTab === 'form' ? '#FFFFFF' : 'transparent',
-                    color: previewTab === 'form' ? 'var(--ink)' : 'var(--steel)',
-                    boxShadow: previewTab === 'form' ? 'var(--shadow-xs)' : 'none',
-                    padding: '5px 12px',
-                    fontSize: 12,
-                  }}
-                >
-                  Live Form
-                </button>
-                <button
-                  onClick={() => setPreviewTab('react')}
-                  className="btn btn-sm"
-                  style={{
-                    background: previewTab === 'react' ? '#FFFFFF' : 'transparent',
-                    color: previewTab === 'react' ? 'var(--ink)' : 'var(--steel)',
-                    boxShadow: previewTab === 'react' ? 'var(--shadow-xs)' : 'none',
-                    padding: '5px 12px',
-                    fontSize: 12,
-                  }}
-                >
-                  React
-                </button>
-                <button
-                  onClick={() => setPreviewTab('curl')}
-                  className="btn btn-sm"
-                  style={{
-                    background: previewTab === 'curl' ? '#FFFFFF' : 'transparent',
-                    color: previewTab === 'curl' ? 'var(--ink)' : 'var(--steel)',
-                    boxShadow: previewTab === 'curl' ? 'var(--shadow-xs)' : 'none',
-                    padding: '5px 12px',
-                    fontSize: 12,
-                  }}
-                >
-                  cURL
-                </button>
-                <button
-                  onClick={() => setPreviewTab('inbox')}
-                  className="btn btn-sm"
-                  style={{
-                    background: previewTab === 'inbox' ? '#FFFFFF' : 'transparent',
-                    color: previewTab === 'inbox' ? 'var(--ink)' : 'var(--steel)',
-                    boxShadow: previewTab === 'inbox' ? 'var(--shadow-xs)' : 'none',
-                    padding: '5px 12px',
-                    fontSize: 12,
-                  }}
-                >
-                  Inbox (Live)
-                </button>
+
+              <div className="flex items-center gap-1">
+                {(['form', 'react', 'curl', 'inbox'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setPreviewTab(tab)}
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-all ${
+                      previewTab === tab
+                        ? 'bg-card text-foreground shadow-xs'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {tab === 'form'
+                      ? 'Live Form'
+                      : tab === 'react'
+                      ? 'React'
+                      : tab === 'curl'
+                      ? 'cURL'
+                      : 'Inbox (Live)'}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Body of Mockup */}
-            <div style={{ background: '#FFFFFF', padding: '28px' }}>
+            <div className="bg-card p-6 sm:p-8">
               {previewTab === 'form' && (
-                <div style={{ maxWidth: 640, margin: '0 auto' }}>
-                  <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
+                <div className="max-w-xl mx-auto">
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
                     <div>
-                      <div className="flex items-center gap-xs" style={{ marginBottom: 4 }}>
-                        <span className="badge badge-green">{activeTemplate.badge}</span>
-                        <span style={{ fontSize: 12, color: 'var(--steel)' }}>Active Form Endpoint</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="secondary" className="text-xs font-semibold">
+                          {activeTemplate.badge}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">Active Form Endpoint</span>
                       </div>
-                      <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--ink)' }}>
+                      <h3 className="text-lg font-bold text-foreground">
                         {activeTemplate.name}
                       </h3>
                     </div>
-                    <span style={{ fontSize: 12, color: 'var(--steel)' }}>
+                    <span className="text-xs font-mono text-muted-foreground hidden sm:inline">
                       POST /submit/{activeTemplate.slug}
                     </span>
                   </div>
 
                   {!submitted ? (
-                    <form onSubmit={handleFormSubmit} style={{ display: 'grid', gap: 16 }}>
+                    <form onSubmit={handleFormSubmit} className="space-y-4">
                       {activeTemplate.fields.map((field) => (
-                        <div key={field.key}>
-                          <label className="label" style={{ fontSize: 13 }}>
-                            {field.label} {field.required && <span style={{ color: 'var(--brand-error)' }}>*</span>}
+                        <div key={field.key} className="space-y-1.5">
+                          <label className="text-xs font-semibold text-foreground">
+                            {field.label} {field.required && <span className="text-destructive">*</span>}
                           </label>
 
                           {field.type === 'textarea' ? (
                             <textarea
-                              className="input"
+                              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                               rows={3}
                               placeholder={field.placeholder}
                               value={formInputs[field.key] ?? ''}
@@ -501,7 +514,7 @@ ${activeTemplate.fields
                             />
                           ) : field.type === 'select' ? (
                             <select
-                              className="input"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                               value={formInputs[field.key] ?? ''}
                               onChange={(e) =>
                                 setFormInputs({ ...formInputs, [field.key]: e.target.value })
@@ -514,9 +527,8 @@ ${activeTemplate.fields
                               ))}
                             </select>
                           ) : (
-                            <input
+                            <Input
                               type={field.type}
-                              className="input"
                               placeholder={field.placeholder}
                               required={field.required}
                               value={formInputs[field.key] ?? ''}
@@ -531,18 +543,20 @@ ${activeTemplate.fields
                       {/* Honeypot field (hidden from legitimate users) */}
                       <input name="_honeypot" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
 
-                      <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
-                        <span style={{ fontSize: 12, color: 'var(--steel)' }}>
-                          🔒 Honeypot &amp; Redis rate-limit active
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <Lock size={12} className="text-emerald-500" />
+                          Honeypot trap &amp; Redis rate-limit active
                         </span>
-                        <button
+                        <Button
                           type="submit"
-                          className="btn btn-accent btn-sm flex items-center gap-xs"
+                          size="sm"
                           disabled={isSubmitting}
+                          className="gap-1.5 w-full sm:w-auto"
                         >
                           {isSubmitting ? (
                             <>
-                              <RefreshCw size={13} className="spinner" />
+                              <RefreshCw size={13} className="animate-spin" />
                               <span>Validating payload...</span>
                             </>
                           ) : (
@@ -551,58 +565,29 @@ ${activeTemplate.fields
                               <span>Submit to endpoint</span>
                             </>
                           )}
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   ) : (
-                    <div
-                      style={{
-                        background: '#F8FAFC',
-                        border: '1px solid var(--hairline)',
-                        borderRadius: 'var(--radius-xl)',
-                        padding: 28,
-                        textAlign: 'center',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: '50%',
-                          background: 'rgba(16, 185, 129, 0.12)',
-                          color: '#059669',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          margin: '0 auto 12px',
-                        }}
-                      >
+                    <div className="rounded-xl border border-border bg-secondary/30 p-6 text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
                         <CheckCircle2 size={26} />
                       </div>
-                      <h4 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-                        Submission Received &amp; Validated!
-                      </h4>
-                      <p style={{ fontSize: 13, color: 'var(--steel)', marginBottom: 18 }}>
-                        Payload matched schema types. IP rate limiter OK. Resend alert dispatched.
-                      </p>
+                      <div>
+                        <h4 className="text-base font-bold text-foreground">
+                          Submission Received &amp; Validated!
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Payload matched schema types. IP rate limiter OK. Resend alert dispatched.
+                        </p>
+                      </div>
 
-                      <div
-                        style={{
-                          background: '#0B0F17',
-                          borderRadius: 'var(--radius-md)',
-                          padding: '14px 18px',
-                          textAlign: 'left',
-                          fontFamily: 'Geist Mono, monospace',
-                          fontSize: 12,
-                          color: '#00D4A4',
-                          marginBottom: 18,
-                        }}
-                      >
-                        <pre style={{ margin: 0 }}>
+                      <div className="bg-charcoal text-emerald-400 rounded-lg p-3 text-left font-mono text-xs overflow-x-auto shadow-inner border border-charcoal-700">
+                        <pre className="m-0">
 {`HTTP/1.1 200 OK
 {
   "ok": true,
-  "id": "sub_${Math.random().toString(36).slice(2, 10)}",
+  "id": "sub_live_${Math.random().toString(36).slice(2, 9)}",
   "project": "${activeTemplate.slug}",
   "data": ${JSON.stringify(formInputs, null, 2)},
   "email_alert": "Dispatched via Resend",
@@ -611,20 +596,22 @@ ${activeTemplate.fields
                         </pre>
                       </div>
 
-                      <div className="flex items-center justify-center gap-sm">
-                        <button
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setSubmitted(false)}
-                          className="btn btn-secondary btn-sm"
                         >
                           Submit another entry
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          size="sm"
                           onClick={() => setPreviewTab('inbox')}
-                          className="btn btn-primary btn-sm flex items-center gap-xs"
+                          className="gap-1.5"
                         >
                           <span>View in inbox</span>
                           <ArrowRight size={13} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -632,113 +619,103 @@ ${activeTemplate.fields
               )}
 
               {previewTab === 'react' && (
-                <div>
-                  <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                    <span style={{ fontSize: 12, color: 'var(--steel)', fontFamily: 'Geist Mono, monospace' }}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-muted-foreground">
                       ContactForm.tsx (Zero external dependencies)
                     </span>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => copySnippet(getReactCode())}
-                      className="btn btn-ghost btn-sm flex items-center gap-xs"
-                      style={{ fontSize: 12 }}
+                      className="gap-1.5 text-xs h-8"
                     >
-                      {copiedCode ? <Check size={13} color="var(--brand-green-deep)" /> : <Copy size={13} />}
+                      {copiedCode ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
                       <span>{copiedCode ? 'Copied' : 'Copy React'}</span>
-                    </button>
+                    </Button>
                   </div>
-                  <div
-                    style={{
-                      background: '#0B0F17',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: 20,
-                      color: '#E2E8F0',
-                      fontFamily: 'Geist Mono, monospace',
-                      fontSize: 13,
-                      lineHeight: 1.6,
-                      overflowX: 'auto',
-                    }}
-                  >
-                    <pre style={{ margin: 0 }}>{getReactCode()}</pre>
+                  <div className="bg-charcoal text-ivory rounded-xl p-4 font-mono text-xs leading-relaxed overflow-x-auto border border-charcoal-700">
+                    <pre className="m-0">{getReactCode()}</pre>
                   </div>
                 </div>
               )}
 
               {previewTab === 'curl' && (
-                <div>
-                  <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                    <span style={{ fontSize: 12, color: 'var(--steel)', fontFamily: 'Geist Mono, monospace' }}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-muted-foreground">
                       terminal / bash
                     </span>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => copySnippet(getCurlCode())}
-                      className="btn btn-ghost btn-sm flex items-center gap-xs"
-                      style={{ fontSize: 12 }}
+                      className="gap-1.5 text-xs h-8"
                     >
-                      {copiedCode ? <Check size={13} color="var(--brand-green-deep)" /> : <Copy size={13} />}
+                      {copiedCode ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
                       <span>{copiedCode ? 'Copied' : 'Copy cURL'}</span>
-                    </button>
+                    </Button>
                   </div>
-                  <div
-                    style={{
-                      background: '#0B0F17',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: 20,
-                      color: '#E2E8F0',
-                      fontFamily: 'Geist Mono, monospace',
-                      fontSize: 13,
-                      lineHeight: 1.6,
-                      overflowX: 'auto',
-                    }}
-                  >
-                    <pre style={{ margin: 0 }}>{getCurlCode()}</pre>
+                  <div className="bg-charcoal text-ivory rounded-xl p-4 font-mono text-xs leading-relaxed overflow-x-auto border border-charcoal-700">
+                    <pre className="m-0">{getCurlCode()}</pre>
                   </div>
                 </div>
               )}
 
               {previewTab === 'inbox' && (
-                <div>
-                  <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h4 style={{ fontSize: 16, fontWeight: 700 }}>Submissions Inbox (Simulated)</h4>
-                      <p style={{ fontSize: 12, color: 'var(--steel)' }}>Showing live submissions received by this endpoint</p>
+                      <h4 className="text-sm font-bold text-foreground">Submissions Inbox (Simulated)</h4>
+                      <p className="text-xs text-muted-foreground">Showing inbound submissions received by this endpoint</p>
                     </div>
-                    <button
-                      onClick={() => alert('Simulated CSV download')}
-                      className="btn btn-secondary btn-sm flex items-center gap-xs"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => alert('Simulated CSV export ready')}
+                      className="gap-1.5 text-xs h-8"
                     >
                       <Download size={13} />
                       <span>Export CSV</span>
-                    </button>
+                    </Button>
                   </div>
 
-                  <div style={{ border: '1px solid var(--hairline)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                  <div className="border border-border rounded-xl overflow-hidden">
+                    <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr style={{ background: '#F8FAFC', borderBottom: '1px solid var(--hairline)', color: 'var(--steel)' }}>
-                          <th style={{ padding: '10px 14px' }}>Date</th>
-                          <th style={{ padding: '10px 14px' }}>Primary Field</th>
-                          <th style={{ padding: '10px 14px' }}>Email</th>
-                          <th style={{ padding: '10px 14px' }}>Status</th>
+                        <tr className="bg-secondary/40 border-b border-border text-muted-foreground">
+                          <th className="py-2.5 px-3 font-semibold">Date</th>
+                          <th className="py-2.5 px-3 font-semibold">Primary Field</th>
+                          <th className="py-2.5 px-3 font-semibold">Email</th>
+                          <th className="py-2.5 px-3 font-semibold">Status</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        <tr style={{ borderBottom: '1px solid var(--hairline)' }}>
-                          <td style={{ padding: '10px 14px', color: 'var(--steel)' }}>Just now</td>
-                          <td style={{ padding: '10px 14px', fontWeight: 600 }}>{formInputs.name || formInputs.attendee_name || formInputs.full_name || 'Alex Morgan'}</td>
-                          <td style={{ padding: '10px 14px' }}>{formInputs.email || 'alex@company.com'}</td>
-                          <td style={{ padding: '10px 14px' }}><span className="badge badge-success">Verified</span></td>
+                      <tbody className="divide-y divide-border">
+                        <tr className="hover:bg-secondary/20 transition-colors">
+                          <td className="py-2.5 px-3 text-muted-foreground">Just now</td>
+                          <td className="py-2.5 px-3 font-semibold text-foreground">
+                            {formInputs.name || formInputs.attendee_name || formInputs.full_name || 'Alex Morgan'}
+                          </td>
+                          <td className="py-2.5 px-3 text-foreground">{formInputs.email || 'alex@company.com'}</td>
+                          <td className="py-2.5 px-3">
+                            <Badge variant="success" className="text-[10px]">Verified</Badge>
+                          </td>
                         </tr>
-                        <tr style={{ borderBottom: '1px solid var(--hairline)' }}>
-                          <td style={{ padding: '10px 14px', color: 'var(--steel)' }}>12 mins ago</td>
-                          <td style={{ padding: '10px 14px', fontWeight: 600 }}>Dev Team lead</td>
-                          <td style={{ padding: '10px 14px' }}>lead@startup.co</td>
-                          <td style={{ padding: '10px 14px' }}><span className="badge badge-success">Verified</span></td>
+                        <tr className="hover:bg-secondary/20 transition-colors">
+                          <td className="py-2.5 px-3 text-muted-foreground">12 mins ago</td>
+                          <td className="py-2.5 px-3 font-semibold text-foreground">Dev Team Lead</td>
+                          <td className="py-2.5 px-3 text-foreground">lead@startup.co</td>
+                          <td className="py-2.5 px-3">
+                            <Badge variant="success" className="text-[10px]">Verified</Badge>
+                          </td>
                         </tr>
-                        <tr>
-                          <td style={{ padding: '10px 14px', color: 'var(--steel)' }}>1 hour ago</td>
-                          <td style={{ padding: '10px 14px', fontWeight: 600 }}>Product Designer</td>
-                          <td style={{ padding: '10px 14px' }}>designer@creative.studio</td>
-                          <td style={{ padding: '10px 14px' }}><span className="badge badge-success">Verified</span></td>
+                        <tr className="hover:bg-secondary/20 transition-colors">
+                          <td className="py-2.5 px-3 text-muted-foreground">1 hour ago</td>
+                          <td className="py-2.5 px-3 font-semibold text-foreground">Product Designer</td>
+                          <td className="py-2.5 px-3 text-foreground">designer@creative.studio</td>
+                          <td className="py-2.5 px-3">
+                            <Badge variant="success" className="text-[10px]">Verified</Badge>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -751,174 +728,169 @@ ${activeTemplate.fields
       </section>
 
       {/* ─── Bento Grid: Everything Included ───────────────────────────────── */}
-      <section id="features" style={{ padding: 'var(--space-section) 0', background: 'var(--canvas-subtle)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 52px' }}>
-            <span className="badge badge-green" style={{ marginBottom: 12 }}>
+      <section id="features" className="py-20 bg-secondary/30 transition-colors border-y border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <Badge variant="outline" className="mb-3 border-primary/20 bg-primary/5 text-primary">
               Everything Included
-            </span>
-            <h2 className="text-display-lg" style={{ marginBottom: 16 }}>
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
               Built for speed. Hardened for production.
             </h2>
-            <p className="text-subtitle">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Never spin up an Express server, database migration, or SMTP transport just to intake a contact form.
             </p>
           </div>
 
-          <div className="bento-grid">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Bento Card 1: Visual Schema Validation */}
-            <div className="bento-card" style={{ gridColumn: 'span 7' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'var(--brand-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-green-deep)' }}>
-                  <Sliders size={20} />
+            <Card className="md:col-span-12 lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <Sliders size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">Visual Schema Validation</h3>
+                    <span className="text-xs text-muted-foreground">Powered by dynamic Zod schemas</span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-heading-4">Visual Schema Validation</h3>
-                  <span style={{ fontSize: 12, color: 'var(--steel)' }}>Powered by dynamic Zod schemas</span>
-                </div>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                  Define strict types for your form keys. Formsy automatically validates email syntax, number ranges, required inputs, and sanitizes unwanted fields before they touch your database.
+                </p>
               </div>
-              <p className="text-body-md" style={{ color: 'var(--slate)', marginBottom: 24 }}>
-                Define strict types for your form keys. Formsy automatically validates email syntax, number ranges, required inputs, and sanitizes unwanted fields before they touch your database.
-              </p>
 
-              <div
-                style={{
-                  background: '#F8FAFC',
-                  border: '1px solid var(--hairline)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 16,
-                  display: 'grid',
-                  gap: 8,
-                }}
-              >
-                <div className="flex items-center justify-between" style={{ padding: '8px 12px', background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--hairline)' }}>
-                  <div className="flex items-center gap-sm">
-                    <code className="code-inline">email</code>
-                    <span style={{ fontSize: 13, color: 'var(--slate)' }}>User Email</span>
+              <div className="rounded-xl border border-border bg-background p-3 sm:p-4 space-y-2">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/30 border border-border/60">
+                  <div className="flex items-center gap-2.5">
+                    <code className="text-xs font-mono font-bold text-foreground">email</code>
+                    <span className="text-xs text-muted-foreground">User Email</span>
                   </div>
-                  <div className="flex items-center gap-xs">
-                    <span className="badge badge-surface">email</span>
-                    <span className="badge badge-error">Required</span>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="secondary" className="text-[10px]">email</Badge>
+                    <Badge variant="destructive" className="text-[10px]">Required</Badge>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between" style={{ padding: '8px 12px', background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--hairline)' }}>
-                  <div className="flex items-center gap-sm">
-                    <code className="code-inline">budget</code>
-                    <span style={{ fontSize: 13, color: 'var(--slate)' }}>Project Budget</span>
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/30 border border-border/60">
+                  <div className="flex items-center gap-2.5">
+                    <code className="text-xs font-mono font-bold text-foreground">budget</code>
+                    <span className="text-xs text-muted-foreground">Project Budget</span>
                   </div>
-                  <div className="flex items-center gap-xs">
-                    <span className="badge badge-surface">number</span>
-                    <span style={{ fontSize: 12, color: 'var(--stone)' }}>Optional</span>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="secondary" className="text-[10px]">number</Badge>
+                    <span className="text-[11px] text-muted-foreground">Optional</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between" style={{ padding: '8px 12px', background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--hairline)' }}>
-                  <div className="flex items-center gap-sm">
-                    <code className="code-inline">newsletter</code>
-                    <span style={{ fontSize: 13, color: 'var(--slate)' }}>Subscribe to updates</span>
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/30 border border-border/60">
+                  <div className="flex items-center gap-2.5">
+                    <code className="text-xs font-mono font-bold text-foreground">newsletter</code>
+                    <span className="text-xs text-muted-foreground">Subscribe to updates</span>
                   </div>
-                  <div className="flex items-center gap-xs">
-                    <span className="badge badge-surface">boolean</span>
-                    <span style={{ fontSize: 12, color: 'var(--stone)' }}>Optional</span>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="secondary" className="text-[10px]">boolean</Badge>
+                    <span className="text-[11px] text-muted-foreground">Optional</span>
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Bento Card 2: Spam & Rate Limiting */}
-            <div className="bento-card" style={{ gridColumn: 'span 5' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(239, 68, 68, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-error)' }}>
-                  <Shield size={20} />
+            <Card className="md:col-span-12 lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">Triple-Guard Spam Shield</h3>
+                    <span className="text-xs text-muted-foreground">Zero spam in your database</span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-heading-4">Triple-Guard Spam Shield</h3>
-                  <span style={{ fontSize: 12, color: 'var(--steel)' }}>Zero spam in your database</span>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                  Includes built-in honeypot field traps, 60 req/min Upstash Redis rate limiting, and CORS origin restrictions.
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2.5 p-3 rounded-lg bg-secondary/40 border border-border/60 text-xs font-medium text-foreground">
+                  <Check size={15} className="text-emerald-500 shrink-0" />
+                  <span>Honeypot trap: Auto-drops bots silently</span>
+                </div>
+                <div className="flex items-center gap-2.5 p-3 rounded-lg bg-secondary/40 border border-border/60 text-xs font-medium text-foreground">
+                  <Check size={15} className="text-emerald-500 shrink-0" />
+                  <span>SHA-256 IP hashing: Zero PII logged</span>
+                </div>
+                <div className="flex items-center gap-2.5 p-3 rounded-lg bg-secondary/40 border border-border/60 text-xs font-medium text-foreground">
+                  <Check size={15} className="text-emerald-500 shrink-0" />
+                  <span>CORS protection: Restrict by allowed domains</span>
                 </div>
               </div>
-              <p className="text-body-md" style={{ color: 'var(--slate)', marginBottom: 20 }}>
-                Includes built-in honeypot field traps, 60 req/min Upstash Redis rate limiting, and CORS origin restrictions.
-              </p>
-              <div style={{ display: 'grid', gap: 10, marginTop: 'auto' }}>
-                <div className="flex items-center gap-sm" style={{ padding: '10px 14px', background: '#F8FAFC', borderRadius: 'var(--radius-md)' }}>
-                  <Check size={16} color="var(--brand-green-deep)" />
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>Honeypot trap: Auto-drops bots silently</span>
-                </div>
-                <div className="flex items-center gap-sm" style={{ padding: '10px 14px', background: '#F8FAFC', borderRadius: 'var(--radius-md)' }}>
-                  <Check size={16} color="var(--brand-green-deep)" />
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>SHA-256 IP hashing: Zero PII logged</span>
-                </div>
-                <div className="flex items-center gap-sm" style={{ padding: '10px 14px', background: '#F8FAFC', borderRadius: 'var(--radius-md)' }}>
-                  <Check size={16} color="var(--brand-green-deep)" />
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>CORS protection: Restrict by allowed domains</span>
-                </div>
-              </div>
-            </div>
+            </Card>
 
             {/* Bento Card 3: Resend Email Alerts */}
-            <div className="bento-card" style={{ gridColumn: 'span 4' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(59, 130, 246, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', marginBottom: 14 }}>
-                <Mail size={20} />
+            <Card className="md:col-span-6 lg:col-span-4 p-6 flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4">
+                  <Mail size={20} />
+                </div>
+                <h3 className="text-base font-bold text-foreground mb-2">Resend Email Alerts</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                  Receive instant formatted email alerts when someone submits. Controlled per form and turned off by default to protect your quota.
+                </p>
               </div>
-              <h3 className="text-heading-4" style={{ marginBottom: 8 }}>Resend Email Alerts</h3>
-              <p className="text-body-sm" style={{ color: 'var(--slate)', marginBottom: 16 }}>
-                Receive instant formatted email alerts when someone submits. Controlled per form and turned off by default to protect your quota.
-              </p>
-              <div className="badge badge-surface" style={{ width: 'fit-content', marginTop: 'auto' }}>
+              <Badge variant="outline" className="w-fit text-[11px]">
                 Instant Resend API Integration
-              </div>
-            </div>
+              </Badge>
+            </Card>
 
             {/* Bento Card 4: 0.5KB Embed */}
-            <div className="bento-card" style={{ gridColumn: 'span 4' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(16, 185, 129, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', marginBottom: 14 }}>
-                <Zap size={20} />
+            <Card className="md:col-span-6 lg:col-span-4 p-6 flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+                  <Zap size={20} />
+                </div>
+                <h3 className="text-base font-bold text-foreground mb-2">0.5KB Drop-in Script</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                  Add one &lt;script&gt; tag or use standard fetch(). Works seamlessly with Astro, Next.js, Webflow, Framer, and plain HTML.
+                </p>
               </div>
-              <h3 className="text-heading-4" style={{ marginBottom: 8 }}>0.5KB Drop-in Script</h3>
-              <p className="text-body-sm" style={{ color: 'var(--slate)', marginBottom: 16 }}>
-                Add one `&lt;script&gt;` tag or use standard `fetch()`. Works seamlessly with Astro, Next.js, Webflow, Framer, and plain HTML.
-              </p>
-              <div className="badge badge-surface" style={{ width: 'fit-content', marginTop: 'auto' }}>
+              <Badge variant="outline" className="w-fit text-[11px]">
                 Zero Framework Lock-in
-              </div>
-            </div>
+              </Badge>
+            </Card>
 
             {/* Bento Card 5: Free Universal Limits */}
-            <div className="bento-card" style={{ gridColumn: 'span 4' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(245, 158, 11, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D97706', marginBottom: 14 }}>
-                <Sparkles size={20} />
+            <Card className="md:col-span-12 lg:col-span-4 p-6 flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
+                  <Sparkles size={20} />
+                </div>
+                <h3 className="text-base font-bold text-foreground mb-2">Free Universal Tier</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                  Every user gets up to {APP_LIMITS.MAX_FORMS_PER_USER} active forms and {APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER} submissions/month free. No credit card required.
+                </p>
               </div>
-              <h3 className="text-heading-4" style={{ marginBottom: 8 }}>Free Universal Tier</h3>
-              <p className="text-body-sm" style={{ color: 'var(--slate)', marginBottom: 16 }}>
-                Every user gets up to {APP_LIMITS.MAX_FORMS_PER_USER} active forms and {APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER} submissions/month free. No credit card required.
-              </p>
-              <div className="badge badge-green" style={{ width: 'fit-content', marginTop: 'auto' }}>
+              <Badge variant="success" className="w-fit text-[11px]">
                 {APP_LIMITS.MAX_FORMS_PER_USER} Forms · {APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER} Submissions/Mo
-              </div>
-            </div>
+              </Badge>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* ─── Framework Trust Stack ─────────────────────────────────────────── */}
-      <section style={{ padding: '48px 0', borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)', background: '#FFFFFF' }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <p className="text-micro-upper" style={{ color: 'var(--steel)', marginBottom: 20 }}>
+      <section className="py-12 bg-background border-b border-border transition-colors">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-5">
             Works with any frontend stack or static site generator
           </p>
-          <div className="flex items-center justify-center gap-xl" style={{ flexWrap: 'wrap', opacity: 0.85 }}>
+          <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
             {['Next.js', 'React', 'Astro', 'SvelteKit', 'Remix', 'Vite', 'HTML5 & Fetch'].map((item) => (
               <span
                 key={item}
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: 'var(--slate)',
-                  padding: '6px 14px',
-                  borderRadius: 'var(--radius-full)',
-                  background: 'var(--surface)',
-                }}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full border border-border bg-card text-foreground shadow-xs"
               >
                 {item}
               </span>
@@ -928,136 +900,114 @@ ${activeTemplate.fields
       </section>
 
       {/* ─── How it works (3-Step Workflow) ────────────────────────────────── */}
-      <section id="how-it-works" style={{ padding: 'var(--space-section) 0', background: '#FFFFFF' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 52px' }}>
-            <span className="badge badge-green" style={{ marginBottom: 12 }}>
+      <section id="how-it-works" className="py-20 bg-background transition-colors">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-xl mx-auto mb-14">
+            <Badge variant="outline" className="mb-3 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               Simple 3-Step Setup
-            </span>
-            <h2 className="text-display-lg" style={{ marginBottom: 14 }}>
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
               From idea to live endpoint in 60 seconds
             </h2>
-            <p className="text-subtitle">
+            <p className="text-sm sm:text-base text-muted-foreground">
               No server setup, no SMTP configurations, no database queries.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
-            <div className="card" style={{ padding: 32 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--ink)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, marginBottom: 20 }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6 sm:p-8 space-y-4">
+              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-base">
                 1
               </div>
-              <h3 className="text-heading-4" style={{ marginBottom: 8 }}>Create Form &amp; Schema</h3>
-              <p className="text-body-sm" style={{ color: 'var(--slate)' }}>
+              <h3 className="text-base font-bold text-foreground">Create Form &amp; Schema</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Set your form name and add the fields you require. Formsy sets up strict Zod type validation automatically.
               </p>
-            </div>
+            </Card>
 
-            <div className="card" style={{ padding: 32 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--ink)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, marginBottom: 20 }}>
+            <Card className="p-6 sm:p-8 space-y-4">
+              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-base">
                 2
               </div>
-              <h3 className="text-heading-4" style={{ marginBottom: 8 }}>Point Your Form Endpoint</h3>
-              <p className="text-body-sm" style={{ color: 'var(--slate)' }}>
-                Copy your unique endpoint URL into your React fetch call or HTML <code>&lt;form action="..."&gt;</code>. Done.
+              <h3 className="text-base font-bold text-foreground">Point Your Form Endpoint</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Copy your unique endpoint URL into your React fetch call or HTML <code className="bg-secondary px-1 py-0.5 rounded text-[11px]">&lt;form action="..."&gt;</code>. Done.
               </p>
-            </div>
+            </Card>
 
-            <div className="card" style={{ padding: 32 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--ink)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, marginBottom: 20 }}>
+            <Card className="p-6 sm:p-8 space-y-4">
+              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-base">
                 3
               </div>
-              <h3 className="text-heading-4" style={{ marginBottom: 8 }}>Receive Submissions</h3>
-              <p className="text-body-sm" style={{ color: 'var(--slate)' }}>
+              <h3 className="text-base font-bold text-foreground">Receive Submissions</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 View clean submissions in your dashboard, download full CSV reports, and receive real-time email alerts via Resend.
               </p>
-            </div>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* ─── Developer Code Sandbox ────────────────────────────────────────── */}
-      <section style={{ padding: 'var(--space-section) 0', background: 'var(--canvas-subtle)' }}>
-        <div className="container">
-          <div style={{ maxWidth: 880, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 36 }}>
-              <span className="badge badge-green" style={{ marginBottom: 12 }}>
-                Developer Friendly
-              </span>
-              <h2 className="text-display-lg" style={{ marginBottom: 14 }}>
-                Integrates with your existing workflow
-              </h2>
-              <p className="text-subtitle">
-                No heavyweight client library required. Standard HTTP POST requests work everywhere.
-              </p>
-            </div>
+      <section className="py-20 bg-secondary/30 transition-colors border-y border-border">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <Badge variant="outline" className="mb-3 border-primary/20 bg-primary/5 text-primary">
+              Developer Friendly
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
+              Integrates with your existing workflow
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
+              No heavyweight client library required. Standard HTTP POST requests work everywhere.
+            </p>
+          </div>
 
-            <div style={{ background: '#0B0F17', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: '#111827' }}>
-                <div className="flex items-center gap-xs">
+          <div className="rounded-xl overflow-hidden border border-charcoal-700 bg-charcoal text-ivory shadow-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-charcoal-700 bg-charcoal-900/60">
+              <div className="flex items-center gap-1.5">
+                {(['react', 'curl', 'html'] as const).map((tab) => (
                   <button
-                    onClick={() => setSandboxTab('react')}
-                    className="btn btn-sm"
-                    style={{
-                      background: sandboxTab === 'react' ? 'rgba(255,255,255,0.12)' : 'transparent',
-                      color: sandboxTab === 'react' ? '#00D4A4' : '#94A3B8',
-                      fontSize: 13,
-                      padding: '5px 14px',
-                    }}
+                    key={tab}
+                    type="button"
+                    onClick={() => setSandboxTab(tab)}
+                    className={`text-xs font-semibold px-3 py-1 rounded-md transition-all ${
+                      sandboxTab === tab
+                        ? 'bg-ivory/15 text-emerald-400'
+                        : 'text-ivory/60 hover:text-ivory'
+                    }`}
                   >
-                    React / Next.js
+                    {tab === 'react' ? 'React / Next.js' : tab === 'curl' ? 'cURL' : 'HTML5 Form'}
                   </button>
-                  <button
-                    onClick={() => setSandboxTab('curl')}
-                    className="btn btn-sm"
-                    style={{
-                      background: sandboxTab === 'curl' ? 'rgba(255,255,255,0.12)' : 'transparent',
-                      color: sandboxTab === 'curl' ? '#00D4A4' : '#94A3B8',
-                      fontSize: 13,
-                      padding: '5px 14px',
-                    }}
-                  >
-                    cURL
-                  </button>
-                  <button
-                    onClick={() => setSandboxTab('html')}
-                    className="btn btn-sm"
-                    style={{
-                      background: sandboxTab === 'html' ? 'rgba(255,255,255,0.12)' : 'transparent',
-                      color: sandboxTab === 'html' ? '#00D4A4' : '#94A3B8',
-                      fontSize: 13,
-                      padding: '5px 14px',
-                    }}
-                  >
-                    HTML5 Form
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => {
-                    const code =
-                      sandboxTab === 'react'
-                        ? getReactCode()
-                        : sandboxTab === 'curl'
-                        ? getCurlCode()
-                        : `<form action="https://api.formsy.dev/submit/contact" method="POST">\n  <input type="text" name="name" required />\n  <input type="email" name="email" required />\n  <button type="submit">Submit</button>\n</form>`
-                    copySnippet(code, true)
-                  }}
-                  className="btn btn-ghost btn-sm flex items-center gap-xs"
-                  style={{ color: '#94A3B8', fontSize: 12 }}
-                >
-                  {copiedSandbox ? <Check size={13} color="var(--brand-green)" /> : <Copy size={13} />}
-                  <span>{copiedSandbox ? 'Copied' : 'Copy'}</span>
-                </button>
+                ))}
               </div>
 
-              <div style={{ padding: 24, overflowX: 'auto', color: '#E2E8F0', fontFamily: 'Geist Mono, monospace', fontSize: 13, lineHeight: 1.6 }}>
-                <pre style={{ margin: 0 }}>
-                  {sandboxTab === 'react'
-                    ? getReactCode()
-                    : sandboxTab === 'curl'
-                    ? getCurlCode()
-                    : `<!-- Zero JS required: standard browser submission -->
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const code =
+                    sandboxTab === 'react'
+                      ? getReactCode()
+                      : sandboxTab === 'curl'
+                      ? getCurlCode()
+                      : `<form action="https://api.formsy.dev/submit/contact" method="POST">\n  <input type="text" name="name" required />\n  <input type="email" name="email" required />\n  <button type="submit">Submit</button>\n</form>`
+                  copySnippet(code, true)
+                }}
+                className="text-ivory/70 hover:text-ivory hover:bg-ivory/10 gap-1.5 text-xs h-7"
+              >
+                {copiedSandbox ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                <span>{copiedSandbox ? 'Copied' : 'Copy'}</span>
+              </Button>
+            </div>
+
+            <div className="p-5 overflow-x-auto font-mono text-xs leading-relaxed text-ivory/90">
+              <pre className="m-0">
+                {sandboxTab === 'react'
+                  ? getReactCode()
+                  : sandboxTab === 'curl'
+                  ? getCurlCode()
+                  : `<!-- Zero JS required: standard browser submission -->
 <form action="https://api.formsy.dev/submit/${activeTemplate.slug}" method="POST">
   <!-- Invisible Honeypot Spam Trap -->
   <input type="text" name="_honeypot" style="display:none" tabindex="-1" autocomplete="off" />
@@ -1070,29 +1020,28 @@ ${activeTemplate.fields
 
   <button type="submit">Send</button>
 </form>`}
-                </pre>
-              </div>
+              </pre>
             </div>
           </div>
         </div>
       </section>
 
       {/* ─── FAQ Accordion ─────────────────────────────────────────────────── */}
-      <section id="faq" style={{ padding: 'var(--space-section) 0', background: '#FFFFFF' }}>
-        <div className="container-narrow">
-          <div style={{ textAlign: 'center', marginBottom: 44 }}>
-            <span className="badge badge-green" style={{ marginBottom: 12 }}>
+      <section id="faq" className="py-20 bg-background transition-colors">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-3 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               Questions &amp; Answers
-            </span>
-            <h2 className="text-display-lg" style={{ marginBottom: 12 }}>
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-3">
               Frequently asked questions
             </h2>
-            <p className="text-subtitle">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Everything you need to know about Formsy's zero-config form endpoints.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gap: 12 }}>
+          <div className="space-y-3">
             {[
               {
                 q: 'What are the limits on the free plan?',
@@ -1115,115 +1064,108 @@ ${activeTemplate.fields
                 a: 'Yes. All submission data is stored encrypted in Postgres, IP addresses are anonymized via SHA-256 hashing (no raw PII retained), and endpoints require schema verification before saving.',
               },
             ].map((faq, idx) => (
-              <div
+              <Card
                 key={faq.q}
-                style={{
-                  border: '1px solid var(--hairline)',
-                  borderRadius: 'var(--radius-lg)',
-                  overflow: 'hidden',
-                  background: openFaq === idx ? 'var(--canvas-subtle)' : '#FFFFFF',
-                  transition: 'background 150ms ease',
-                }}
+                className="overflow-hidden transition-colors"
               >
                 <button
                   type="button"
                   onClick={() => toggleFaq(idx)}
-                  style={{
-                    width: '100%',
-                    padding: '18px 20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    fontSize: 15,
-                    color: 'var(--ink)',
-                  }}
+                  className="w-full p-4 sm:p-5 flex items-center justify-between text-left font-semibold text-sm text-foreground hover:bg-secondary/20 transition-colors"
                 >
                   <span>{faq.q}</span>
-                  {openFaq === idx ? <ChevronUp size={18} color="var(--steel)" /> : <ChevronDown size={18} color="var(--steel)" />}
+                  {openFaq === idx ? (
+                    <ChevronUp size={16} className="text-muted-foreground shrink-0 ml-4" />
+                  ) : (
+                    <ChevronDown size={16} className="text-muted-foreground shrink-0 ml-4" />
+                  )}
                 </button>
                 {openFaq === idx && (
-                  <div style={{ padding: '0 20px 20px', fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>
+                  <CardContent className="px-4 sm:px-5 pb-5 pt-0 text-xs text-muted-foreground leading-relaxed">
                     {faq.a}
-                  </div>
+                  </CardContent>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
       {/* ─── Pre-Footer CTA Banner ─────────────────────────────────────────── */}
-      <section id="cta" style={{ padding: '80px 0', background: 'var(--canvas-subtle)', borderTop: '1px solid var(--hairline)' }}>
-        <div className="container" style={{ textAlign: 'center' }}>
-          <div style={{ maxWidth: 640, margin: '0 auto' }}>
-            <span className="badge badge-green" style={{ marginBottom: 14 }}>
-              Get Started Today
-            </span>
-            <h2 className="text-display-lg" style={{ marginBottom: 16 }}>
-              Ready to collect submissions without a backend?
-            </h2>
-            <p className="text-subtitle" style={{ marginBottom: 32 }}>
-              Create your first form in 60 seconds. Free {APP_LIMITS.MAX_FORMS_PER_USER} forms &amp; {APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER} monthly submissions.
-            </p>
+      <section id="cta" className="py-20 bg-secondary/40 border-t border-border transition-colors">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <Badge variant="outline" className="mb-4 border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            Get Started Today
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+            Ready to collect submissions without a backend?
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground mb-8">
+            Create your first form in 60 seconds. Free {APP_LIMITS.MAX_FORMS_PER_USER} forms &amp; {APP_LIMITS.MAX_MONTHLY_SUBMISSIONS_PER_USER} monthly submissions.
+          </p>
 
-            <div className="flex items-center justify-center gap-md" style={{ flexWrap: 'wrap', marginBottom: 20 }}>
-              {!isLoading && isAuthenticated ? (
-                <Link to="/dashboard" className="btn btn-primary btn-lg flex items-center gap-sm">
+          <div className="flex items-center justify-center gap-3 flex-wrap mb-4">
+            {!isLoading && isAuthenticated ? (
+              <Link to="/dashboard">
+                <Button size="lg" className="rounded-full gap-2 shadow-sm">
                   <LayoutDashboard size={18} />
                   <span>Go to Dashboard</span>
                   <ArrowRight size={16} />
-                </Link>
-              ) : (
-                <>
-                  <button
-                    onClick={() => loginWithGithub()}
-                    className="btn btn-primary btn-lg flex items-center gap-sm"
-                  >
-                    <Terminal size={18} />
-                    <span>Continue with GitHub</span>
-                  </button>
-                  <button
-                    onClick={() => loginWithGoogle()}
-                    className="btn btn-secondary btn-lg flex items-center gap-sm"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                    </svg>
-                    <span>Google</span>
-                  </button>
-                </>
-              )}
-            </div>
-
-            <p style={{ fontSize: 13, color: 'var(--steel)' }}>
-              No credit card required · Instant setup · Universal free tier
-            </p>
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  onClick={() => loginWithGithub()}
+                  className="rounded-full gap-2 shadow-sm"
+                >
+                  <Terminal size={18} />
+                  <span>Continue with GitHub</span>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => loginWithGoogle()}
+                  className="rounded-full gap-2 bg-card hover:bg-secondary shadow-xs"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Google</span>
+                </Button>
+              </>
+            )}
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            No credit card required &middot; Instant setup &middot; Universal free tier
+          </p>
         </div>
       </section>
 
       {/* ─── Footer ────────────────────────────────────────────────────────── */}
-      <footer style={{ padding: '40px 0', background: '#FFFFFF', borderTop: '1px solid var(--hairline)' }}>
-        <div className="container">
-          <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 20 }}>
-            <div className="flex items-center gap-sm">
-              <span style={{ fontWeight: 800, fontSize: 16 }}>Formsy</span>
-              <span style={{ fontSize: 13, color: 'var(--steel)' }}>© {new Date().getFullYear()} Formsy Inc. All rights reserved.</span>
+      <footer className="py-10 bg-background border-t border-border transition-colors">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <span className="font-bold text-sm text-foreground">Formsy</span>
+              <span className="text-xs text-muted-foreground">
+                &copy; {new Date().getFullYear()} Formsy Inc. All rights reserved.
+              </span>
             </div>
 
-            <div className="flex items-center gap-lg" style={{ fontSize: 13, color: 'var(--steel)' }}>
-              <div className="flex items-center gap-xs">
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-green-deep)', display: 'inline-block' }} />
+            <div className="flex items-center gap-5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
                 <span>All systems operational</span>
               </div>
-              <a href="#features" style={{ color: 'inherit' }}>Features</a>
-              <a href="#demo" style={{ color: 'inherit' }}>Demo</a>
-              <a href="#faq" style={{ color: 'inherit' }}>FAQ</a>
+              <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+              <a href="#demo" className="hover:text-foreground transition-colors">Demo</a>
+              <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
             </div>
           </div>
         </div>

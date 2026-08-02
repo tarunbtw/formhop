@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { APP_LIMITS } from '../lib/constants'
+import { LogOut, ShieldCheck } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card'
+import { Button } from '../components/ui/button'
+import { Badge } from '../components/ui/badge'
+import { ThemeToggle } from '../components/ui/theme-toggle'
 
 interface UsageData {
   forms: { used: number; limit?: number; remaining?: number }
@@ -28,124 +33,143 @@ export default function SettingsPage() {
   const submissionsRemaining = Math.max(0, submissionsLimit - submissionsUsed)
 
   return (
-    <div style={{ flex: 1, padding: 'var(--space-xxl)', maxWidth: 640 }}>
-      <div style={{ marginBottom: 'var(--space-xxl)' }}>
-        <h1 className="text-heading-3" style={{ color: 'var(--ink)' }}>Settings</h1>
-        <p className="text-body-sm" style={{ color: 'var(--steel)', marginTop: 4 }}>
-          Manage your account profile and view usage limits.
+    <div className="flex-1 p-6 md:p-8 max-w-3xl mx-auto w-full space-y-8">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+          Settings &amp; Usage
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage your account profile, theme appearance, and quota utilization.
         </p>
       </div>
 
-      {/* ─── Profile ──────────────────────────────────────────────────────── */}
-      <section style={{ marginBottom: 'var(--space-xxl)' }}>
-        <h2 className="text-body-sm-med" style={{ color: 'var(--steel)', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: 11 }}>
-          Profile
-        </h2>
-        <div className="card flex items-center gap-lg">
-          {user?.image ? (
-            <img
-              src={user.image}
-              alt="Avatar"
-              style={{ width: 48, height: 48, borderRadius: '50%', border: '2px solid var(--hairline)' }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 48, height: 48, borderRadius: '50%',
-                background: 'var(--brand-green)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 20, fontWeight: 600, color: 'var(--primary)',
-              }}
+      {/* ─── Profile Card ────────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">User Profile</CardTitle>
+          <CardDescription className="text-xs">
+            Authenticated via Better Auth OAuth providers.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {user?.image ? (
+                <img
+                  src={user.image}
+                  alt="Avatar"
+                  className="h-12 w-12 rounded-full border border-border object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-base font-bold">
+                  {(user?.name ?? user?.email ?? 'U')[0].toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  {user?.name ?? 'Developer'}
+                </p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logout()}
+              className="gap-2 text-xs self-start sm:self-auto text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
             >
-              {(user?.name ?? user?.email ?? 'U')[0].toUpperCase()}
-            </div>
-          )}
-          <div className="flex-1">
-            <p className="text-body-md-med" style={{ color: 'var(--ink)' }}>
-              {user?.name ?? '—'}
-            </p>
-            <p className="text-body-sm" style={{ color: 'var(--steel)' }}>
-              {user?.email}
+              <LogOut size={13} />
+              <span>Sign out</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Appearance / Theme Toggle Card ──────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Appearance &amp; Palette</CardTitle>
+          <CardDescription className="text-xs">
+            Switch between Charcoal &amp; Pale Ivory light or dark themes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">Theme Mode</p>
+            <p className="text-xs text-muted-foreground">
+              Select Light (Pale Ivory), Dark (Charcoal), or follow your System preferences.
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* ─── Usage ────────────────────────────────────────────────────────── */}
-      <section style={{ marginBottom: 'var(--space-xxl)' }}>
-        <h2 className="text-body-sm-med" style={{ color: 'var(--steel)', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: 11 }}>
-          Account Limits &amp; Usage
-        </h2>
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <ThemeToggle variant="dropdown" />
+        </CardContent>
+      </Card>
+
+      {/* ─── Account Usage & Limits ──────────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold">Account Quota</CardTitle>
+              <CardDescription className="text-xs">
+                Free universal capacity limits enforced across your account.
+              </CardDescription>
+            </div>
+            <Badge variant="success" className="gap-1 text-xs">
+              <ShieldCheck size={12} /> Production Active
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
           {/* Active Forms */}
-          <div>
-            <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-              <span className="text-body-sm-med" style={{ color: 'var(--ink)' }}>Active Forms</span>
-              <span className="text-body-sm" style={{ color: formsPercent >= 100 ? 'var(--brand-error)' : 'var(--charcoal)', fontWeight: 600 }}>
-                {formsUsed} / {formsLimit}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">Active Forms</span>
+              <span className="font-mono text-muted-foreground font-medium">
+                {formsUsed} / {formsLimit} ({formsRemaining} remaining)
               </span>
             </div>
-            <div style={{ height: 6, width: '100%', background: 'var(--surface)', borderRadius: 9999, overflow: 'hidden', border: '1px solid var(--hairline)' }}>
+            <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
               <div
-                style={{
-                  width: `${formsPercent}%`,
-                  height: '100%',
-                  background: formsPercent >= 100 ? 'var(--brand-error)' : formsPercent >= 80 ? 'var(--brand-warning)' : 'var(--brand-green-deep)',
-                  borderRadius: 9999,
-                  transition: 'width 250ms ease',
-                }}
+                className={`h-full rounded-full transition-all duration-300 ${
+                  formsPercent >= 100
+                    ? 'bg-destructive'
+                    : formsPercent >= 80
+                    ? 'bg-amber-500'
+                    : 'bg-primary'
+                }`}
+                style={{ width: `${formsPercent}%` }}
               />
             </div>
-            <p className="text-caption" style={{ color: 'var(--steel)', marginTop: 6 }}>
-              {formsPercent >= 100
-                ? 'Limit reached. Delete an existing form to create a new one.'
-                : `${formsRemaining} form${formsRemaining !== 1 ? 's' : ''} remaining`}
-            </p>
           </div>
 
-          {/* Submissions */}
-          <div>
-            <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-              <span className="text-body-sm-med" style={{ color: 'var(--ink)' }}>Monthly Submissions</span>
-              <span className="text-body-sm" style={{ color: submissionsPercent >= 100 ? 'var(--brand-error)' : 'var(--charcoal)', fontWeight: 600 }}>
-                {submissionsUsed} / {submissionsLimit}
+          {/* Monthly Submissions */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">Monthly Ingestion Quota</span>
+              <span className="font-mono text-muted-foreground font-medium">
+                {submissionsUsed} / {submissionsLimit} ({submissionsRemaining} remaining)
               </span>
             </div>
-            <div style={{ height: 6, width: '100%', background: 'var(--surface)', borderRadius: 9999, overflow: 'hidden', border: '1px solid var(--hairline)' }}>
+            <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
               <div
-                style={{
-                  width: `${submissionsPercent}%`,
-                  height: '100%',
-                  background: submissionsPercent >= 100 ? 'var(--brand-error)' : submissionsPercent >= 80 ? 'var(--brand-warning)' : 'var(--brand-green-deep)',
-                  borderRadius: 9999,
-                  transition: 'width 250ms ease',
-                }}
+                className={`h-full rounded-full transition-all duration-300 ${
+                  submissionsPercent >= 100
+                    ? 'bg-destructive'
+                    : submissionsPercent >= 80
+                    ? 'bg-amber-500'
+                    : 'bg-primary'
+                }`}
+                style={{ width: `${submissionsPercent}%` }}
               />
             </div>
-            <p className="text-caption" style={{ color: 'var(--steel)', marginTop: 6 }}>
-              {submissionsPercent >= 100
-                ? 'Monthly limit reached. Resets on the 1st of next month.'
-                : `${submissionsRemaining} submission${submissionsRemaining !== 1 ? 's' : ''} remaining this month · Resets on the 1st`}
+            <p className="text-[11px] text-muted-foreground pt-1">
+              Monthly submission quotas reset automatically on the 1st of every calendar month.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* ─── Account / Sign out ───────────────────────────────────────────── */}
-      <section>
-        <h2 className="text-body-sm-med" style={{ color: 'var(--steel)', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: 11 }}>
-          Account
-        </h2>
-        <div className="card flex items-center justify-between">
-          <div>
-            <p className="text-body-sm-med" style={{ color: 'var(--ink)' }}>Sign out</p>
-            <p className="text-caption" style={{ color: 'var(--steel)' }}>Sign out of your account on this device.</p>
-          </div>
-          <button onClick={() => logout()} className="btn btn-secondary btn-sm">
-            Sign out
-          </button>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </div>
   )
 }

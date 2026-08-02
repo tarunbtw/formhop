@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { Button } from './ui/button'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -22,10 +23,11 @@ export function ConfirmModal({
   danger = false,
   loading = false,
 }: ConfirmModalProps) {
-  // Close on Escape
   useEffect(() => {
     if (!isOpen) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel()
+    }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isOpen, onCancel])
@@ -34,108 +36,41 @@ export function ConfirmModal({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
       onClick={onCancel}
     >
-      {/* Backdrop — solid dark, no blur */}
       <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(0,0,0,0.75)',
-        }}
-      />
-
-      {/* Dialog */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
+        className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg text-foreground animate-in fade-in-0 zoom-in-95"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'relative',
-          background: '#ffffff',
-          border: '1px solid #e5e5e5',
-          borderRadius: 'var(--radius-xl)',
-          padding: '32px',
-          width: '100%',
-          maxWidth: 420,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-          animation: 'modal-in 180ms cubic-bezier(0.34,1.56,0.64,1)',
-        }}
       >
-        {/* Icon */}
-        {danger && (
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              background: 'rgba(229,62,62,0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 20,
-            }}
-          >
-            <AlertTriangle size={22} color="var(--brand-error)" />
+        <div className="flex items-start gap-3">
+          <AlertTriangle
+            size={18}
+            className={`shrink-0 mt-0.5 ${danger ? 'text-destructive' : 'text-muted-foreground'}`}
+          />
+
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold leading-none">{title}</h3>
+            <p className="text-sm text-muted-foreground pt-1.5">{message}</p>
           </div>
-        )}
+        </div>
 
-        <h2
-          id="modal-title"
-          className="text-heading-5"
-          style={{ color: 'var(--ink)', marginBottom: 8 }}
-        >
-          {title}
-        </h2>
-        <p className="text-body-sm" style={{ color: 'var(--steel)', marginBottom: 28, lineHeight: 1.6 }}>
-          {message}
-        </p>
-
-        <div className="flex items-center gap-sm" style={{ justifyContent: 'flex-end' }}>
-          <button
-            className="btn btn-secondary"
-            onClick={onCancel}
-            disabled={loading}
-          >
+        <div className="mt-6 flex items-center justify-end gap-2.5">
+          <Button variant="outline" size="sm" onClick={onCancel} disabled={loading}>
             Cancel
-          </button>
-          <button
-            className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`}
+          </Button>
+          <Button
+            variant={danger ? 'destructive' : 'default'}
+            size="sm"
             onClick={onConfirm}
             disabled={loading}
-            style={{ minWidth: 90 }}
+            className="gap-2"
           >
-            {loading ? (
-              <span style={{
-                display: 'inline-block',
-                width: 14,
-                height: 14,
-                border: '2px solid rgba(255,255,255,0.3)',
-                borderTop: '2px solid #fff',
-                borderRadius: '50%',
-                animation: 'spin 0.6s linear infinite',
-              }} />
-            ) : confirmLabel}
-          </button>
+            {loading && <RefreshCw size={13} className="animate-spin" />}
+            <span>{confirmLabel}</span>
+          </Button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes modal-in {
-          from { opacity: 0; transform: scale(0.95) translateY(8px); }
-          to   { opacity: 1; transform: scale(1)    translateY(0); }
-        }
-      `}</style>
     </div>
   )
 }
