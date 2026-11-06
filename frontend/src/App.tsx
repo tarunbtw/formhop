@@ -11,6 +11,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './components/Toast'
 import { TopNav } from './components/Layout'
 import LandingPage from './pages/LandingPage'
+import DocsPage from './pages/DocsPage'
 import DashboardPage from './pages/DashboardPage'
 import NewProjectPage from './pages/NewProjectPage'
 import ProjectDetailPage from './pages/ProjectDetailPage'
@@ -80,6 +81,8 @@ function AppRoutes() {
       <TopNav />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/docs" element={<DocsPage />} />
+        <Route path="/docs/:topic" element={<DocsPage />} />
 
         {/* Protected dashboard routes */}
         <Route element={<RequireAuth />}>

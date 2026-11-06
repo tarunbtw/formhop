@@ -1,264 +1,73 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Charcoal (#2A2529) & Pale Ivory (#F3F0E7) Design System ──────────────── */
-
+/* ─── Formcarry Design Tokens (Clean, modern form API aesthetic) ─── */
 @layer base {
   :root {
-    /* Base HSL tokens for shadcn/ui — Charcoal & Pale Ivory */
-    --background: 45 20% 98%;          /* #FAF9F6 Pristine luminous ivory canvas */
-    --foreground: 312 6% 16%;          /* #2A2529 Charcoal */
+    /* Formcarry Base Colors */
+    --background: 0 0% 100%;            /* #FFFFFF pure white canvas */
+    --foreground: 243 69% 14%;          /* #0E0B3D Formcarry Signature Navy Ink */
 
-    --card: 0 0% 100%;                 /* #FFFFFF Pure crisp card surface */
-    --card-foreground: 312 6% 16%;
+    --card: 0 0% 100%;                  /* #FFFFFF */
+    --card-foreground: 243 69% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 312 6% 16%;
+    --popover-foreground: 243 69% 14%;
 
-    --primary: 312 6% 16%;             /* #2A2529 Charcoal Primary Action */
-    --primary-foreground: 45 32% 93%;  /* #F3F0E7 Pale Ivory Text */
+    --primary: 218 100% 50%;            /* #005DFF Formcarry Primary Blue */
+    --primary-foreground: 0 0% 100%;    /* #FFFFFF */
 
-    --secondary: 45 15% 94%;           /* #F4F1EA Pale Ivory subtle accent */
-    --secondary-foreground: 312 6% 16%;
+    --secondary: 220 50% 97%;           /* #F3F5FB Formcarry Subtle Blue Surface */
+    --secondary-foreground: 243 69% 14%;
 
-    --muted: 45 15% 94%;               /* #F4F1EA */
-    --muted-foreground: 312 5% 46%;    /* #787076 Refined muted text */
+    --muted: 225 33% 96%;               /* #ECEFF9 */
+    --muted-foreground: 236 16% 50%;     /* #6C6F93 Formcarry Muted Slate */
 
-    --accent: 45 15% 94%;
-    --accent-foreground: 312 6% 16%;
+    --accent: 220 100% 97%;             /* #F0F5FF */
+    --accent-foreground: 218 100% 50%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 344 92% 56%;         /* #F6285F Formcarry Coral */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 45 10% 89%;              /* #E6E2D8 Crisp, subtle hairline border */
-    --input: 45 10% 89%;
-    --ring: 312 6% 16%;
+    --border: 230 33% 90%;              /* #DDE0EE Hairline border */
+    --input: 230 33% 90%;
+    --ring: 218 100% 50%;
 
-    --radius: 0.5rem;                  /* 8px tight crisp modern shadcn border-radius */
+    --radius: 0.625rem;                 /* 10px Formcarry standard button/card radius */
 
     /* Semantic brand tokens */
-    --brand-charcoal: #2A2529;
-    --brand-ivory: #F3F0E7;
-    --brand-green: #059669;
-    --brand-green-soft: rgba(5, 150, 105, 0.08);
-    --brand-error: #EF4444;
-    --brand-warning: #F59E0B;
+    --fc-blue: #005DFF;
+    --fc-blue-hover: #1463FF;
+    --fc-blue-dark: #293FFF;
+    --fc-navy: #0E0B3D;
+    --fc-darkest: #030122;
+    --fc-muted: #6C6F93;
+    --fc-subtle: #535479;
+    --fc-bg-alt: #F7F9FC;
+    --fc-bg-tint: #F0F5FF;
+    --fc-border: #DDE0EE;
+    --fc-coral: #F6285F;
+    --fc-green: #52E282;
+    --fc-yellow: #FFC933;
+    --fc-purple: #7214FF;
+    --fc-cyan: #21DDFF;
   }
 
-  .dark {
-    /* Dark mode inverted with Charcoal dominant background */
-    --background: 312 6% 11%;          /* #1D181C Charcoal Canvas */
-    --foreground: 45 32% 93%;          /* #F3F0E7 Pale Ivory */
 
-    --card: 312 6% 15%;                /* #2A2529 Charcoal Card */
-    --card-foreground: 45 32% 93%;
 
-    --popover: 312 6% 15%;
-    --popover-foreground: 45 32% 93%;
-
-    --primary: 45 32% 93%;             /* #F3F0E7 Pale Ivory Primary Action */
-    --primary-foreground: 312 6% 16%;  /* #2A2529 Charcoal Text */
-
-    --secondary: 312 6% 19%;           /* #342D33 */
-    --secondary-foreground: 45 32% 93%;
-
-    --muted: 312 6% 19%;               /* #342D33 */
-    --muted-foreground: 45 12% 65%;    /* #A89F97 */
-
-    --accent: 312 6% 20%;              /* #362F35 */
-    --accent-foreground: 45 32% 93%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 312 6% 22%;              /* #3B343A Crisp Charcoal Border */
-    --input: 312 6% 22%;
-    --ring: 45 32% 93%;
-
-    --brand-charcoal: #2A2529;
-    --brand-ivory: #F3F0E7;
-    --brand-green: #10B981;
-    --brand-green-soft: rgba(16, 185, 129, 0.12);
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
 
-  html {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    scroll-behavior: smooth;
-  }
-
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    min-height: 100vh;
-    transition: background-color 200ms ease, color 200ms ease;
+    @apply bg-background text-foreground font-sans antialiased;
+    letter-spacing: -0.01em;
   }
 
-  code, pre, kbd, samp, .mono {
-    font-family: 'Geist Mono', 'SF Mono', Menlo, Consolas, monospace;
+  h1, h2, h3, h4 {
+    letter-spacing: -0.03em;
   }
-}
-
-/* ─── Code and Terminal Mockups ─────────────────────────────────────────────── */
-
-.code-window {
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--card);
-  overflow: hidden;
-}
-
-/* ─── Browser Mockup ─────────────────────────────────────────────────────────── */
-
-.browser-mockup {
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  box-shadow: 0 20px 50px -12px rgba(42, 37, 41, 0.15);
-  background: var(--card);
-  overflow: hidden;
-}
-
-.dark .browser-mockup {
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-.browser-topbar {
-  background: var(--secondary);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.browser-dots {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.browser-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.browser-dot.red    { background: #FF5F56; }
-.browser-dot.yellow { background: #FFBD2E; }
-.browser-dot.green  { background: #27C93F; }
-
-.browser-address {
-  flex: 1;
-  max-width: 480px;
-  margin: 0 auto;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 9999px;
-  padding: 4px 14px;
-  font-family: 'Geist Mono', monospace;
-  font-size: 12px;
-  color: var(--muted-foreground);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ─── Bento Grid Utilities ───────────────────────────────────────────────────── */
-
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 24px;
-}
-
-.bento-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 2px 8px -2px rgba(42, 37, 41, 0.05);
-  display: flex;
-  flex-direction: column;
-  transition: all 200ms ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.bento-card:hover {
-  border-color: var(--ring);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px -4px rgba(42, 37, 41, 0.08);
-}
-
-.dark .bento-card:hover {
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.4);
-}
-
-/* ─── Toast Animation ────────────────────────────────────────────────────────── */
-
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 100;
-  background: #2A2529;
-  color: #F3F0E7;
-  padding: 12px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: slideUp 200ms ease;
-  max-width: 380px;
-  border: 1px solid rgba(243, 240, 231, 0.15);
-}
-
-.dark .toast {
-  background: #3E373D;
-  border-color: #554D54;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-
-.toast-success { border-left: 4px solid var(--brand-green); }
-.toast-error   { border-left: 4px solid var(--brand-error); }
-
-/* ─── Custom scrollbar ───────────────────────────────────────────────────────── */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
 }

@@ -6,7 +6,6 @@ import { LogOut, ShieldCheck } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { ThemeToggle } from '../components/ui/theme-toggle'
 
 interface UsageData {
   forms: { used: number; limit?: number; remaining?: number }
@@ -83,26 +82,6 @@ export default function SettingsPage() {
               <span>Sign out</span>
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* ─── Appearance / Theme Toggle Card ──────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Appearance &amp; Palette</CardTitle>
-          <CardDescription className="text-xs">
-            Switch between Charcoal &amp; Pale Ivory light or dark themes.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">Theme Mode</p>
-            <p className="text-xs text-muted-foreground">
-              Select Light (Pale Ivory), Dark (Charcoal), or follow your System preferences.
-            </p>
-          </div>
-
-          <ThemeToggle variant="dropdown" />
         </CardContent>
       </Card>
 

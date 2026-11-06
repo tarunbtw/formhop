@@ -1,83 +1,45 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
-type Theme = 'light' | 'dark' | 'system'
+type Theme = 'light'
 
 interface ThemeContextType {
   theme: Theme
-  resolvedTheme: 'light' | 'dark'
+  resolvedTheme: 'light'
   setTheme: (theme: Theme) => void
   toggleTheme: () => void
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+const ThemeContext = createContext<ThemeContextType>({
+  theme: 'light',
+  resolvedTheme: 'light',
+  setTheme: () => {},
+  toggleTheme: () => {},
+})
 
-export function ThemeProvider({
-  children,
-  defaultTheme = 'light',
-  storageKey = 'formhop-theme',
-}: {
-  children: ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
-}) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    return (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  })
-
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+export function ThemeProvider({ children, defaultTheme: _defaultTheme, storageKey: _storageKey }: { children: ReactNode; defaultTheme?: string; storageKey?: string }) {
+  const [theme] = useState<Theme>('light')
 
   useEffect(() => {
+    // Default to clean white/light mode permanently
     const root = document.documentElement
-
-    const updateResolvedTheme = () => {
-      let current: 'light' | 'dark' = 'light'
-
-      if (theme === 'system') {
-        current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      } else {
-        current = theme
-      }
-
-      setResolvedTheme(current)
-
-      if (current === 'dark') {
-        root.classList.add('dark')
-      } else {
-        root.classList.remove('dark')
-      }
-    }
-
-    updateResolvedTheme()
-
-    if (theme === 'system') {
-      const media = window.matchMedia('(prefers-color-scheme: dark)')
-      const listener = () => updateResolvedTheme()
-      media.addEventListener('change', listener)
-      return () => media.removeEventListener('change', listener)
-    }
-  }, [theme])
-
-  const setTheme = (newTheme: Theme) => {
-    localStorage.setItem(storageKey, newTheme)
-    setThemeState(newTheme)
-  }
-
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
-  }
+    root.classList.remove('dark')
+    localStorage.removeItem('formhop-theme')
+  }, [])
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        resolvedTheme: 'light',
+        setTheme: () => {},
+        toggleTheme: () => {},
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   )
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
-  return context
+  return useContext(ThemeContext)
 }
-
