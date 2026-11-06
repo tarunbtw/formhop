@@ -13,6 +13,7 @@ async function request<T = any>(url: string, options: RequestOptions = {}): Prom
     : API_BASE_URL
     ? `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`
     : url
+
   if (options.params) {
     const searchParams = new URLSearchParams()
     for (const [key, val] of Object.entries(options.params)) {

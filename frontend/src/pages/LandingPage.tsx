@@ -10,8 +10,6 @@ import {
   FileCheck2,
   CheckCircle2,
   RefreshCw,
-  Shield,
-  Lock,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import {
@@ -578,63 +576,6 @@ form.addEventListener('submit', async (e) => {
         </div>
       </section>
 
-      {/* ─── Section: Best in class spam protection. ──────────────────── */}
-      <section className="pt-4 sm:pt-6 pb-6 sm:pb-8 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#005DFF] mb-2">
-              Spam Protection
-            </p>
-            <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#0E0B3D] tracking-[-0.035em]">
-              Best in class spam protection.
-            </h2>
-            <p className="text-base text-[#535479] mt-4 font-normal">
-              We handle spam submissions and keep your inbox safe with a 98.6% accuracy rate, without frustrating users with puzzle captchas.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="p-7 rounded-2xl bg-white border border-[#DDE0EE] shadow-xs">
-              <div className="w-10 h-10 rounded-lg bg-[#F0F5FF] text-[#005DFF] flex items-center justify-center mb-5">
-                <Shield size={20} />
-              </div>
-              <h3 className="text-base font-bold text-[#0E0B3D] mb-2">
-                Invisible Honeypot
-              </h3>
-              <p className="text-xs sm:text-sm text-[#535479] leading-relaxed">
-                Automated bot scrapers blindly fill hidden form fields that real users never see.
-                Formhop detects and drops them silently.
-              </p>
-            </div>
-
-            <div className="p-7 rounded-2xl bg-white border border-[#DDE0EE] shadow-xs">
-              <div className="w-10 h-10 rounded-lg bg-[#F0F5FF] text-[#005DFF] flex items-center justify-center mb-5">
-                <Zap size={20} />
-              </div>
-              <h3 className="text-base font-bold text-[#0E0B3D] mb-2">
-                Redis Rate Limiting
-              </h3>
-              <p className="text-xs sm:text-sm text-[#535479] leading-relaxed">
-                Upstash Redis distributed rate limiting caps abusive spam bursts to 60 requests/min
-                per hashed IP, preventing DDoS flooding.
-              </p>
-            </div>
-
-            <div className="p-7 rounded-2xl bg-white border border-[#DDE0EE] shadow-xs">
-              <div className="w-10 h-10 rounded-lg bg-[#F0F5FF] text-[#005DFF] flex items-center justify-center mb-5">
-                <Lock size={20} />
-              </div>
-              <h3 className="text-base font-bold text-[#0E0B3D] mb-2">
-                SHA-256 IP Privacy
-              </h3>
-              <p className="text-xs sm:text-sm text-[#535479] leading-relaxed">
-                Submitter IP addresses are hashed using SHA-256 with a private salt solely for spam
-                prevention. We never store plain text IPs.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ─── Section: Final CTA Banner (Hassle Free Forms) ─────────────── */}
       <section className="pt-4 sm:pt-6 pb-12 sm:pb-16 text-center relative overflow-hidden bg-white">
@@ -697,7 +638,7 @@ form.addEventListener('submit', async (e) => {
               <ul className="space-y-1.5 text-xs text-[#6C6F93]">
                 <li><a href="#examples" className="hover:text-[#005DFF]">Examples</a></li>
                 <li><a href="#features" className="hover:text-[#005DFF]">Features</a></li>
-                <li><Link to="/docs" className="hover:text-[#005DFF]">Docs</Link></li>
+                <li><Link to="/docs" target="_blank" rel="noopener noreferrer" className="hover:text-[#005DFF]">Docs</Link></li>
               </ul>
             </div>
 

@@ -380,10 +380,7 @@ export default function NewProjectPage() {
               </div>
             ))}
           </CardContent>
-          <CardFooter className="flex justify-between border-t border-border pt-4">
-            <span className="text-xs text-muted-foreground">
-              Built-in honeypot (<code>_honeypot</code>) and rate limiting active by default.
-            </span>
+          <CardFooter className="flex justify-end border-t border-border pt-4">
             <Button
               type="submit"
               disabled={createMutation.isPending || isAtLimit}

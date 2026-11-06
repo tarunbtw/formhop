@@ -95,6 +95,8 @@ export function TopNav() {
             </a>
             <Link
               to="/docs"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hover:text-[#005DFF] transition-colors"
             >
               Docs
@@ -166,6 +168,8 @@ export function TopNav() {
             </a>
             <Link
               to="/docs"
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
               className="block text-xs font-medium text-[#0E0B3D] py-1.5"
             >
@@ -250,6 +254,8 @@ export function TopNav() {
           </Link>
           <Link
             to="/docs"
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#6C6F93] hover:text-[#0E0B3D] transition-colors"
           >
             Docs

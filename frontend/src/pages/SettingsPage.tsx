@@ -2,10 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { projectsApi } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { APP_LIMITS } from '../lib/constants'
-import { LogOut, ShieldCheck } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card'
 import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
 
 interface UsageData {
   forms: { used: number; limit?: number; remaining?: number }
@@ -95,9 +94,10 @@ export default function SettingsPage() {
                 Free universal capacity limits enforced across your account.
               </CardDescription>
             </div>
-            <Badge variant="success" className="gap-1 text-xs">
-              <ShieldCheck size={12} /> Production Active
-            </Badge>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Active
+            </span>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">

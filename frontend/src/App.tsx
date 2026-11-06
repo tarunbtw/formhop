@@ -33,27 +33,9 @@ function RequireAuth() {
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            border: '2px solid var(--hairline)',
-            borderTop: '2px solid var(--brand-green)',
-            borderRadius: '50%',
-            animation: 'spin 0.6s linear infinite',
-          }}
-        />
-        <span className="text-body-sm" style={{ color: 'var(--steel)' }}>Loading…</span>
+      <div className="min-h-screen flex items-center justify-center flex-col gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-[#DDE0EE] border-t-[#005DFF] animate-spin" />
+        <span className="text-xs text-[#6C6F93]">Loading Formhop…</span>
       </div>
     )
   }
